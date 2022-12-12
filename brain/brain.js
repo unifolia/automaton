@@ -19,7 +19,7 @@ class Synth {
         this.oscillatorEngine.type = "sine";
         this.oscillatorEngine.frequency.setValueAtTime(i, this.audioContext.currentTime);
         this.gainNode = this.audioContext.createGain();
-        this.gainNode.gain.value = 0.25;
+        this.gainNode.gain.value = 0.15;
         this.gainNode.connect(this.audioContext.destination);
     }
 }
@@ -48,6 +48,11 @@ const noteFrom = (padId) => {
         padId = padId + octave * 5 + 5;
     return +(tuning * Math.pow(A440, padId)).toFixed(4);
 };
+function copyBuffer(buffer) {
+    let copy = new ArrayBuffer(buffer.byteLength);
+    new Uint8Array(copy).set(new Uint8Array(buffer));
+    return copy;
+}
 document.addEventListener("DOMContentLoaded", () => __awaiter(void 0, void 0, void 0, function* () {
     const allPads = [...document.querySelectorAll(".pad")];
     let activePads = [];
@@ -61,10 +66,13 @@ document.addEventListener("DOMContentLoaded", () => __awaiter(void 0, void 0, vo
     let timer;
     // Stats
     const mode = 3;
-    const speed = 5000;
+    const speed = 3000;
     let generationLog = [];
     // Audio components
-    let response = yield fetch("https://jameslewis.io/assets/remverb.wav");
+    const cors = window.location.href.includes("file")
+        ? "https://cors-anywhere.herokuapp.com/"
+        : "";
+    let response = yield fetch(`${cors}https://jameslewis.io/assets/Output%201-2.wav`);
     let arraybuffer = yield response.arrayBuffer();
     /**
      * @function returnSurroundingElements return pads surrounding another pad
@@ -132,15 +140,16 @@ document.addEventListener("DOMContentLoaded", () => __awaiter(void 0, void 0, vo
         const synth = new Synth(noteFreq);
         const createReverb = () => __awaiter(void 0, void 0, void 0, function* () {
             let convolver = synth.audioContext.createConvolver();
-            convolver.buffer = yield synth.audioContext.decodeAudioData(arraybuffer);
+            const bufferCopy = copyBuffer(arraybuffer.slice(0));
+            convolver.buffer = yield synth.audioContext.decodeAudioData(bufferCopy);
             return convolver;
         });
         const reverb = yield createReverb();
         reverb.connect(synth.gainNode);
         synth.oscillatorEngine.connect(reverb);
         synth.oscillatorEngine.start();
-        const noteBuffer = new Promise((res) => setTimeout(res, speed * 0.9));
-        const reverbBuffer = new Promise((res) => setTimeout(res, speed * 1.5));
+        const noteBuffer = new Promise((res) => setTimeout(res, speed * 0.85));
+        const reverbBuffer = new Promise((res) => setTimeout(res, speed * 1.45));
         yield noteBuffer.then(() => {
             synth.oscillatorEngine.stop();
             synth.oscillatorEngine.disconnect();
@@ -225,8 +234,10 @@ document.addEventListener("DOMContentLoaded", () => __awaiter(void 0, void 0, vo
     playButton === null || playButton === void 0 ? void 0 : playButton.addEventListener("click", () => {
         isPlaying = !isPlaying;
         updateState();
-        if (isPlaying === true)
+        if (isPlaying === true) {
+            play();
             timer = setInterval(() => play(), speed);
+        }
         else
             clearInterval(timer);
     });
