@@ -48,7 +48,7 @@ const noteFrom = (padId) => {
         padId = padId + octave * 5 + 5;
     return +(tuning * Math.pow(A440, padId)).toFixed(4);
 };
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", () => __awaiter(void 0, void 0, void 0, function* () {
     const allPads = [...document.querySelectorAll(".pad")];
     let activePads = [];
     const grid = document.querySelector(".grid");
@@ -63,6 +63,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const mode = 3;
     const speed = 5000;
     let generationLog = [];
+    // Audio components
+    let response = yield fetch("https://jameslewis.io/assets/remverb.wav");
+    let arraybuffer = yield response.arrayBuffer();
     /**
      * @function returnSurroundingElements return pads surrounding another pad
      */
@@ -129,11 +132,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const synth = new Synth(noteFreq);
         const createReverb = () => __awaiter(void 0, void 0, void 0, function* () {
             let convolver = synth.audioContext.createConvolver();
-            const CORS = window.location.href.includes("file:///")
-                ? "https://cors-anywhere.herokuapp.com/"
-                : "";
-            let response = yield fetch(`${CORS}https://jameslewis.io/assets/remverb.wav`);
-            let arraybuffer = yield response.arrayBuffer();
             convolver.buffer = yield synth.audioContext.decodeAudioData(arraybuffer);
             return convolver;
         });
@@ -238,4 +236,4 @@ document.addEventListener("DOMContentLoaded", () => {
     resetButton === null || resetButton === void 0 ? void 0 : resetButton.addEventListener("click", () => {
         resetState();
     });
-});
+}));
