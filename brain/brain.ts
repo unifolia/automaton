@@ -44,11 +44,11 @@ const noteFrom = (padId: number) => {
     return +(tuning * Math.pow(A440, padId)).toFixed(4);
 };
 
-function copyBuffer(buffer: ArrayBuffer) {
+const copyBuffer = (buffer: ArrayBuffer) => {
     let copy = new ArrayBuffer(buffer.byteLength);
     new Uint8Array(copy).set(new Uint8Array(buffer));
     return copy;
-}
+};
 
 document.addEventListener("DOMContentLoaded", async () => {
     // Grid/pad info
