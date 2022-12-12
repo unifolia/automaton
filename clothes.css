@@ -1,12 +1,27 @@
 html {
     height: 100vh;
     box-sizing: border-box;
+    background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+    background-size: 400% 400%;
+    animation: gradient 15s ease infinite;
+}
+
+@keyframes gradient {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
 }
 
 body {
     box-sizing: border-box;
     height: 100%;
-    padding: 50px;
+    padding: 25px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -17,7 +32,7 @@ body {
     flex-wrap: wrap;
     flex-direction: row-reverse;
     justify-content: center;
-    width: calc(31px * 8);
+    width: calc(36px * 8);
 }
 
 .grid.loading {
@@ -33,31 +48,32 @@ body {
     display: inline-block;
     cursor: pointer;
 
-    height: 30px;
-    width: 30px;
-    border: 0.1px solid rgb(187, 195, 181);
+    height: 35px;
+    width: 35px;
+    border: 0.1px solid #ffffff;
     border-radius: 50%;
 }
 
 .pad.active {
-    background: #90b0c9;
+    background: #fffa7cab;
 }
 
 .grid:not(.playing) .pad:not(.active):hover {
-    background-color: #b9cad7;
+    background-color: #fffb7c55;
 }
 
 button {
+    font-family: monospace;
     width: 100px;
     cursor: pointer;
-    margin: 10px;
-    padding: 10px;
+    margin: 15px;
+    padding: 20px;
     border-radius: 25px;
-    border: 0.1px solid rgb(187, 195, 181);
+    border: none;
 }
 
 button:hover {
-    background-color: #90b0c9;
+    background-color: #fffa7cab;
 }
 
 @media (min-width: 720px) {
