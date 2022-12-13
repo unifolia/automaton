@@ -12,19 +12,20 @@ class Synth {
         this.audioContext = new window.AudioContext();
 
         this.oscillatorEngine = this.audioContext.createOscillator();
-        this.oscillatorEngine.type = "sine";
+        this.oscillatorEngine.type = this.types[Math.floor(Math.random() * 4)] as OscillatorType;
         this.oscillatorEngine.frequency.setValueAtTime(i, this.audioContext.currentTime);
 
         this.gainNode = this.audioContext.createGain();
-        this.gainNode.gain.value = 0.15;
+        this.gainNode.gain.value = 0.1;
         this.gainNode.connect(this.audioContext.destination);
     }
 }
 
 /**
- * @function noteFrom determines what note to play for @param padId pad
+ * @function calculateNotes determines what note to play for @param padId pad
+ * @returns [frequency to play, KEY CHANGE frequency to play]
  */
-const noteFrom = (padId: number) => {
+const calculateNotes = (padId: number) => {
     const tuning = 440;
     const A440 = Math.pow(2, 1 / 12);
 
@@ -41,9 +42,15 @@ const noteFrom = (padId: number) => {
     else if ((padId + 2) % 7 === 0) padId = padId + octave * 5 + 4;
     else if ((padId + 1) % 7 === 0) padId = padId + octave * 5 + 5;
 
-    return +(tuning * Math.pow(A440, padId)).toFixed(4);
+    return [
+        +(tuning * Math.pow(A440, padId)).toFixed(4),
+        +(tuning * Math.pow(A440, padId + 3)).toFixed(4),
+    ];
 };
 
+/**
+ * @function copyBuffer @returns deep copy of impulse response array buffer
+ */
 const copyBuffer = (buffer: ArrayBuffer) => {
     let copy = new ArrayBuffer(buffer.byteLength);
     new Uint8Array(copy).set(new Uint8Array(buffer));
@@ -58,6 +65,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const grid = document.querySelector(".grid");
     const gridSize = allPads.length;
     const frequencyList: number[] = [];
+    const keyChangeFrequencyList: number[] = [];
 
     // Buttons/status info
     const playButton = document.querySelector(".playButton");
@@ -68,6 +76,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Stats
     const mode = 3;
     const speed = 3000;
+    let generation: number = 0;
     let generationLog: Array<PadArray> = [];
 
     // Audio components
@@ -119,14 +128,18 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
         activePads = [];
         generationLog = [];
+        generation = 0;
 
         updateState();
     };
 
     /**
      * @function generationController compare current pattern to previous pattern, destroy all if plateaued
+     *
+     * @function resetState reset grid
      */
     const generationController = () => {
+        ++generation;
         generationLog.push(activePads);
 
         if (generationLog.length > 2) {
@@ -138,6 +151,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 return "empty";
             });
 
+            // Comment out for infinite
             if (lastGen === currentGen) resetState();
         }
     };
@@ -146,6 +160,8 @@ document.addEventListener("DOMContentLoaded", async () => {
      * @function playMusic create/start/stop pad oscillator
      * @function createReverb create convolution reverb
      * @param noteFreq frequency of the note to play (determined at grid creation)
+     *
+     * @function connect/start/stop/disconnect control audioContext or oscillator
      */
     const playMusic = async (noteFreq: number) => {
         const synth = new Synth(noteFreq);
@@ -161,14 +177,16 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         reverb.connect(synth.gainNode);
         synth.oscillatorEngine.connect(reverb);
+
         synth.oscillatorEngine.start();
 
         const noteBuffer = new Promise((res) => setTimeout(res, speed * 0.85));
-        const reverbBuffer = new Promise((res) => setTimeout(res, speed * 1.45));
         await noteBuffer.then(() => {
             synth.oscillatorEngine.stop();
             synth.oscillatorEngine.disconnect();
         });
+
+        const reverbBuffer = new Promise((res) => setTimeout(res, speed * 1.45));
         await reverbBuffer.then(() => {
             synth.audioContext.close();
         });
@@ -191,18 +209,18 @@ document.addEventListener("DOMContentLoaded", async () => {
          */
         allPads.forEach((pad, padId) => {
             const isActive = pad.classList.contains("active");
-            const surroundingElementsNum = returnSurroundingElements(
+            const surroundingNum = returnSurroundingElements(
                 gridSize,
                 activePadIds,
                 +pad.id
             ).length;
 
             if (
-                (!isActive && surroundingElementsNum === mode) ||
-                (isActive &&
-                    (surroundingElementsNum === mode || surroundingElementsNum === mode - 1))
+                (!isActive && surroundingNum === mode) ||
+                (isActive && (surroundingNum === mode || surroundingNum === mode - 1))
             ) {
-                playMusic(frequencyList[padId]);
+                if (Math.floor(generation / 4) % 2 === 0) playMusic(frequencyList[padId]);
+                else playMusic(keyChangeFrequencyList[padId]);
 
                 if (!activePads.includes(pad)) activePads.push(pad);
                 if (!isActive) pad.classList.add("active");
@@ -215,13 +233,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     };
 
     /**
-     * @function createFrequencyMap map pads to musical notes
+     * @function createFrequencyMaps map pads to musical notes, return primary frequencies list
      */
-    const createFrequencyMap = (padId: number) => {
-        const padNote = noteFrom(gridSize - padId);
-        frequencyList.push(padNote);
+    const createFrequencyMaps = (padId: number) => {
+        const [padNotes, keyChangeNotes] = calculateNotes(gridSize - padId);
 
-        return padNote;
+        frequencyList.push(padNotes);
+        keyChangeFrequencyList.push(keyChangeNotes);
+
+        return padNotes;
     };
 
     /**
@@ -235,15 +255,16 @@ document.addEventListener("DOMContentLoaded", async () => {
         const boxNumStr = `${gridSize - padId}`;
         pad.id = boxNumStr;
 
-        const freq = createFrequencyMap(padId);
+        // Determine what note is associated with each pad
+        const padNotes = createFrequencyMaps(padId);
 
         pad.addEventListener("click", () => {
             if (!isPlaying) {
                 if (!activePads.includes(pad)) {
-                    playMusic(freq);
-
-                    pad.classList.add("active");
                     activePads.push(pad);
+                    pad.classList.add("active");
+
+                    playMusic(padNotes);
                 } else {
                     activePads = activePads.filter((item) => item !== pad);
                     pad.classList.remove("active");
@@ -269,9 +290,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     /**
-     * @event click @function resetState reset grid
+     * @event click @function resetState reset automaton
      */
     resetButton?.addEventListener("click", () => {
         resetState();
     });
 });
+
+// random mode
+// if (Math.floor(Math.random() * 10) === 4) {
+//     playMusic(frequencyList[padId]);
+//     if (!activePads.includes(pad)) activePads.push(pad);
+//     if (!isActive) pad.classList.add("active");
+// } else {
+//     activePads = activePads.filter((item) => item !== pad);
+//     if (isActive) pad.classList.remove("active");
+// }
