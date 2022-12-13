@@ -9,7 +9,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 /**
- * @class {Synth} individual synthesizer
+ * @class individual synthesizer
+ * @param i oscillatorNode's frequency
+ * @oscillatoreEngine random waveform type on generation
  */
 class Synth {
     constructor(i) {
@@ -26,6 +28,8 @@ class Synth {
 /**
  * @function calculateNotes determines what note to play for @param padId pad
  * @returns [frequency to play, KEY CHANGE frequency to play]
+ *
+ * @description: I never want to do this math ever again
  */
 const calculateNotes = (padId) => {
     const tuning = 440;
@@ -48,12 +52,14 @@ const calculateNotes = (padId) => {
     else if ((padId + 1) % 7 === 0)
         padId = padId + octave * 5 + 5;
     return [
+        // Standard notes / G major scale
         +(tuning * Math.pow(A440, padId)).toFixed(4),
+        // Key change / Bb Major
         +(tuning * Math.pow(A440, padId + 3)).toFixed(4),
     ];
 };
 /**
- * @function copyBuffer @returns deep copy of impulse response array buffer
+ * @function copyBuffer @returns true copy of impulse response array buffer
  */
 const copyBuffer = (buffer) => {
     let copy = new ArrayBuffer(buffer.byteLength);
@@ -65,21 +71,20 @@ document.addEventListener("DOMContentLoaded", () => __awaiter(void 0, void 0, vo
     let activePads = [];
     const grid = document.querySelector(".grid");
     const gridSize = allPads.length;
-    const frequencyList = [];
-    const keyChangeFrequencyList = [];
-    // Buttons/status info
+    // Buttons
     const playButton = document.querySelector(".playButton");
     const resetButton = document.querySelector(".resetButton");
     const modeButton = document.querySelector(".modeButton");
-    let isPlaying = false;
-    let timer;
-    // Stats
-    let mode = "Mode: Classic";
+    // Statistics
     const automatonNumber = 3;
     const speed = 3000;
+    let mode = "Mode: Classic";
+    let timer;
+    let isPlaying = false;
     let generation = 0;
     let generationLog = [];
     // Audio components
+    // CORS for local development
     const cors = window.location.href.includes("file")
         ? "https://cors-anywhere.herokuapp.com/"
         : "";
@@ -118,13 +123,13 @@ document.addEventListener("DOMContentLoaded", () => __awaiter(void 0, void 0, vo
     const resetState = () => {
         isPlaying = false;
         clearInterval(timer);
+        updateState();
         activePads.forEach((pad) => {
             pad.classList.remove("active");
         });
-        activePads = [];
-        generationLog = [];
         generation = 0;
-        updateState();
+        generationLog = [];
+        activePads = [];
     };
     /**
      * @function generationController compare current pattern to previous pattern, destroy all if plateaued
@@ -142,7 +147,6 @@ document.addEventListener("DOMContentLoaded", () => __awaiter(void 0, void 0, vo
                     return array.map((div) => div.id).reduce((a, b) => a + b);
                 return "empty";
             });
-            // Comment out for infinite
             if (lastGen === currentGen)
                 resetState();
         }
@@ -179,18 +183,15 @@ document.addEventListener("DOMContentLoaded", () => __awaiter(void 0, void 0, vo
     /**
      * @function classicMode play notes according to Conyway's Game of Life
      */
-    const classicMode = (isActive, surroundingNum, padId, pad) => {
+    const classicMode = (pad, _padId, isActive, surroundingNum) => {
         if ((!isActive && surroundingNum === automatonNumber) ||
             (isActive &&
                 (surroundingNum === automatonNumber || surroundingNum === automatonNumber - 1))) {
-            if (Math.floor(generation / 4) % 2 === 0)
-                playMusic(frequencyList[padId]);
-            else
-                playMusic(keyChangeFrequencyList[padId]);
             if (!activePads.includes(pad))
                 activePads.push(pad);
             if (!isActive)
                 pad.classList.add("active");
+            pad.click();
         }
         else {
             activePads = activePads.filter((item) => item !== pad);
@@ -201,16 +202,13 @@ document.addEventListener("DOMContentLoaded", () => __awaiter(void 0, void 0, vo
     /**
      * @function randomMode every note has 1/10 change in playing
      */
-    const randomMode = (isActive, padId, pad) => {
+    const randomMode = (pad, _padId, isActive) => {
         if (Math.floor(Math.random() * 10) === 0) {
-            if (Math.floor(generation / 4) % 2 === 0)
-                playMusic(frequencyList[padId]);
-            else
-                playMusic(keyChangeFrequencyList[padId]);
             if (!activePads.includes(pad))
                 activePads.push(pad);
             if (!isActive)
                 pad.classList.add("active");
+            pad.click();
         }
         else {
             activePads = activePads.filter((item) => item !== pad);
@@ -219,10 +217,9 @@ document.addEventListener("DOMContentLoaded", () => __awaiter(void 0, void 0, vo
         }
     };
     /**
-     * @function play start cellular automaton transformations
+     * @function autoPlay start cellular automaton transformations
      */
-    const play = () => {
-        grid.click();
+    const autoPlay = () => {
         const activePadIds = activePads.map((activePad) => {
             return +activePad.id;
         });
@@ -237,34 +234,24 @@ document.addEventListener("DOMContentLoaded", () => __awaiter(void 0, void 0, vo
             const isActive = pad.classList.contains("active");
             const surroundingNum = returnSurroundingElements(gridSize, activePadIds, +pad.id).length;
             if (mode === "Mode: Classic")
-                classicMode(isActive, surroundingNum, padId, pad);
+                classicMode(pad, padId, isActive, surroundingNum);
             if (mode === "Mode: Random")
-                randomMode(isActive, padId, pad);
+                randomMode(pad, padId, isActive);
         });
         generationController();
     };
     /**
-     * @function createFrequencyMaps map pads to musical notes, return primary frequencies list
-     */
-    const createFrequencyMaps = (padId) => {
-        const [padNotes, keyChangeNotes] = calculateNotes(gridSize - padId);
-        frequencyList.push(padNotes);
-        keyChangeFrequencyList.push(keyChangeNotes);
-        return padNotes;
-    };
-    /**
-     * @function allPads.forEach grid setup
+     * @function allPads.forEach grid setup / calculate frequencies associated with each pad
      * @function clickEvent select/de-select pads individually
      *
-     * @function createFrequencyMap map pads to musical notes
      * @function playMusic create/start/stop pad oscillator
      */
     allPads.forEach((pad, padId) => {
-        const boxNumStr = `${gridSize - padId}`;
-        pad.id = boxNumStr;
-        // Determine what note is associated with each pad
-        const padNotes = createFrequencyMaps(padId);
+        const boxNum = gridSize - padId;
+        const [padNotes, keyChangeNotes] = calculateNotes(boxNum);
+        pad.id = `${boxNum}`;
         pad.addEventListener("click", () => {
+            // Select/de-select/preview notes for autoPlay
             if (!isPlaying) {
                 if (!activePads.includes(pad)) {
                     activePads.push(pad);
@@ -275,6 +262,13 @@ document.addEventListener("DOMContentLoaded", () => __awaiter(void 0, void 0, vo
                     activePads = activePads.filter((item) => item !== pad);
                     pad.classList.remove("active");
                 }
+            }
+            if (isPlaying) {
+                // Play notes (controlled by autoPlay)
+                if (Math.floor(generation / 4) % 2 === 0)
+                    playMusic(padNotes);
+                else
+                    playMusic(keyChangeNotes);
             }
         });
     });
@@ -288,8 +282,8 @@ document.addEventListener("DOMContentLoaded", () => __awaiter(void 0, void 0, vo
         isPlaying = !isPlaying;
         updateState();
         if (isPlaying === true) {
-            play();
-            timer = setInterval(() => play(), speed);
+            autoPlay();
+            timer = setInterval(() => autoPlay(), speed);
         }
         else
             clearInterval(timer);
@@ -301,7 +295,7 @@ document.addEventListener("DOMContentLoaded", () => __awaiter(void 0, void 0, vo
         resetState();
     });
     /**
-     * @event click @function resetState reset automaton
+     * @event click change mode
      */
     modeButton === null || modeButton === void 0 ? void 0 : modeButton.addEventListener("click", () => {
         if (mode === "Mode: Random")
