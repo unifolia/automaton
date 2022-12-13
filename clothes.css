@@ -63,6 +63,12 @@ body {
     background-color: #fffb7c55;
 }
 
+.controls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
 button {
     font-family: monospace;
     width: 100px;
