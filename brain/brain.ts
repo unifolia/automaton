@@ -70,11 +70,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Buttons/status info
     const playButton = document.querySelector(".playButton");
     const resetButton = document.querySelector(".resetButton");
+    const modeButton = document.querySelector(".modeButton");
     let isPlaying: boolean = false;
     let timer: number;
 
     // Stats
-    const mode = 3;
+    let mode = "Mode: Classic";
+    const automatonNumber = 3;
     const speed = 3000;
     let generation: number = 0;
     let generationLog: Array<PadArray> = [];
@@ -111,9 +113,10 @@ document.addEventListener("DOMContentLoaded", async () => {
      * @function updateState update elements when isPlaying changes
      */
     const updateState = () => {
-        playButton!.className = isPlaying ? "playButton playing" : "playButton";
         playButton!.innerHTML = isPlaying ? "Stop" : "Play";
+
         grid!.className = isPlaying ? "main grid playing" : "main grid";
+        modeButton!.className = isPlaying ? "modeButton playing" : "modeButton";
     };
 
     /**
@@ -193,6 +196,47 @@ document.addEventListener("DOMContentLoaded", async () => {
     };
 
     /**
+     * @function classicMode play notes according to Conyway's Game of Life
+     */
+    const classicMode = (
+        isActive: boolean,
+        surroundingNum: number,
+        padId: number,
+        pad: HTMLDivElement
+    ) => {
+        if (
+            (!isActive && surroundingNum === automatonNumber) ||
+            (isActive &&
+                (surroundingNum === automatonNumber || surroundingNum === automatonNumber - 1))
+        ) {
+            if (Math.floor(generation / 4) % 2 === 0) playMusic(frequencyList[padId]);
+            else playMusic(keyChangeFrequencyList[padId]);
+
+            if (!activePads.includes(pad)) activePads.push(pad);
+            if (!isActive) pad.classList.add("active");
+        } else {
+            activePads = activePads.filter((item) => item !== pad);
+            if (isActive) pad.classList.remove("active");
+        }
+    };
+
+    /**
+     * @function randomMode every note has 1/10 change in playing
+     */
+    const randomMode = (isActive: boolean, padId: number, pad: HTMLDivElement) => {
+        if (Math.floor(Math.random() * 10) === 0) {
+            if (Math.floor(generation / 4) % 2 === 0) playMusic(frequencyList[padId]);
+            else playMusic(keyChangeFrequencyList[padId]);
+
+            if (!activePads.includes(pad)) activePads.push(pad);
+            if (!isActive) pad.classList.add("active");
+        } else {
+            activePads = activePads.filter((item) => item !== pad);
+            if (isActive) pad.classList.remove("active");
+        }
+    };
+
+    /**
      * @function play start cellular automaton transformations
      */
     const play = () => {
@@ -215,19 +259,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                 +pad.id
             ).length;
 
-            if (
-                (!isActive && surroundingNum === mode) ||
-                (isActive && (surroundingNum === mode || surroundingNum === mode - 1))
-            ) {
-                if (Math.floor(generation / 4) % 2 === 0) playMusic(frequencyList[padId]);
-                else playMusic(keyChangeFrequencyList[padId]);
-
-                if (!activePads.includes(pad)) activePads.push(pad);
-                if (!isActive) pad.classList.add("active");
-            } else {
-                activePads = activePads.filter((item) => item !== pad);
-                if (isActive) pad.classList.remove("active");
-            }
+            if (mode === "Mode: Classic") classicMode(isActive, surroundingNum, padId, pad);
+            if (mode === "Mode: Random") randomMode(isActive, padId, pad);
         });
         generationController();
     };
@@ -295,14 +328,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     resetButton?.addEventListener("click", () => {
         resetState();
     });
-});
 
-// random mode
-// if (Math.floor(Math.random() * 10) === 4) {
-//     playMusic(frequencyList[padId]);
-//     if (!activePads.includes(pad)) activePads.push(pad);
-//     if (!isActive) pad.classList.add("active");
-// } else {
-//     activePads = activePads.filter((item) => item !== pad);
-//     if (isActive) pad.classList.remove("active");
-// }
+    /**
+     * @event click @function resetState reset automaton
+     */
+    modeButton?.addEventListener("click", () => {
+        if (mode === "Mode: Random") mode = "Mode: Classic";
+        else mode = "Mode: Random";
+        modeButton.innerHTML = mode;
+    });
+});
