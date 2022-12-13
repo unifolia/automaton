@@ -1,5 +1,7 @@
 /**
- * @class {Synth} individual synthesizer
+ * @class individual synthesizer
+ * @param i oscillatorNode's frequency
+ * @oscillatoreEngine random waveform type on generation
  */
 class Synth {
     types: string[];
@@ -24,14 +26,14 @@ class Synth {
 /**
  * @function calculateNotes determines what note to play for @param padId pad
  * @returns [frequency to play, KEY CHANGE frequency to play]
+ *
+ * @description: I never want to do this math ever again
  */
 const calculateNotes = (padId: number) => {
     const tuning = 440;
     const A440 = Math.pow(2, 1 / 12);
-
     const row = Math.floor((padId - 1) / 8) + 1;
     padId = padId - row * 5 - 17;
-
     const octave = Math.floor(padId / 7 + 2);
 
     if ((padId + 7) % 7 === 0) padId = padId + octave * 5;
@@ -43,13 +45,15 @@ const calculateNotes = (padId: number) => {
     else if ((padId + 1) % 7 === 0) padId = padId + octave * 5 + 5;
 
     return [
+        // Standard notes / G major scale
         +(tuning * Math.pow(A440, padId)).toFixed(4),
+        // Key change / Bb Major
         +(tuning * Math.pow(A440, padId + 3)).toFixed(4),
     ];
 };
 
 /**
- * @function copyBuffer @returns deep copy of impulse response array buffer
+ * @function copyBuffer @returns true copy of impulse response array buffer
  */
 const copyBuffer = (buffer: ArrayBuffer) => {
     let copy = new ArrayBuffer(buffer.byteLength);
@@ -64,24 +68,24 @@ document.addEventListener("DOMContentLoaded", async () => {
     let activePads: PadArray = [];
     const grid: HTMLElement = document.querySelector(".grid")!;
     const gridSize = allPads.length;
-    const frequencyList: number[] = [];
-    const keyChangeFrequencyList: number[] = [];
 
-    // Buttons/status info
+    // Buttons
     const playButton = document.querySelector(".playButton");
     const resetButton = document.querySelector(".resetButton");
     const modeButton = document.querySelector(".modeButton");
-    let isPlaying: boolean = false;
-    let timer: number;
 
-    // Stats
-    let mode = "Mode: Classic";
+    // Statistics
     const automatonNumber = 3;
     const speed = 3000;
+
+    let mode = "Mode: Classic";
+    let timer: number;
+    let isPlaying: boolean = false;
     let generation: number = 0;
     let generationLog: Array<PadArray> = [];
 
     // Audio components
+    // CORS for local development
     const cors = window.location.href.includes("file")
         ? "https://cors-anywhere.herokuapp.com/"
         : "";
@@ -124,16 +128,16 @@ document.addEventListener("DOMContentLoaded", async () => {
      */
     const resetState = () => {
         isPlaying = false;
-
         clearInterval(timer);
+        updateState();
+
         activePads.forEach((pad) => {
             pad.classList.remove("active");
         });
-        activePads = [];
-        generationLog = [];
-        generation = 0;
 
-        updateState();
+        generation = 0;
+        generationLog = [];
+        activePads = [];
     };
 
     /**
@@ -154,7 +158,6 @@ document.addEventListener("DOMContentLoaded", async () => {
                 return "empty";
             });
 
-            // Comment out for infinite
             if (lastGen === currentGen) resetState();
         }
     };
@@ -177,10 +180,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         };
 
         const reverb = await createReverb();
-
         reverb.connect(synth.gainNode);
         synth.oscillatorEngine.connect(reverb);
-
         synth.oscillatorEngine.start();
 
         const noteBuffer = new Promise((res) => setTimeout(res, speed * 0.85));
@@ -199,21 +200,19 @@ document.addEventListener("DOMContentLoaded", async () => {
      * @function classicMode play notes according to Conyway's Game of Life
      */
     const classicMode = (
+        pad: HTMLDivElement,
+        _padId: number,
         isActive: boolean,
-        surroundingNum: number,
-        padId: number,
-        pad: HTMLDivElement
+        surroundingNum: number
     ) => {
         if (
             (!isActive && surroundingNum === automatonNumber) ||
             (isActive &&
                 (surroundingNum === automatonNumber || surroundingNum === automatonNumber - 1))
         ) {
-            if (Math.floor(generation / 4) % 2 === 0) playMusic(frequencyList[padId]);
-            else playMusic(keyChangeFrequencyList[padId]);
-
             if (!activePads.includes(pad)) activePads.push(pad);
             if (!isActive) pad.classList.add("active");
+            pad.click();
         } else {
             activePads = activePads.filter((item) => item !== pad);
             if (isActive) pad.classList.remove("active");
@@ -223,13 +222,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     /**
      * @function randomMode every note has 1/10 change in playing
      */
-    const randomMode = (isActive: boolean, padId: number, pad: HTMLDivElement) => {
+    const randomMode = (pad: HTMLDivElement, _padId: number, isActive: boolean) => {
         if (Math.floor(Math.random() * 10) === 0) {
-            if (Math.floor(generation / 4) % 2 === 0) playMusic(frequencyList[padId]);
-            else playMusic(keyChangeFrequencyList[padId]);
-
             if (!activePads.includes(pad)) activePads.push(pad);
             if (!isActive) pad.classList.add("active");
+            pad.click();
         } else {
             activePads = activePads.filter((item) => item !== pad);
             if (isActive) pad.classList.remove("active");
@@ -237,11 +234,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     };
 
     /**
-     * @function play start cellular automaton transformations
+     * @function autoPlay start cellular automaton transformations
      */
-    const play = () => {
-        grid.click();
-
+    const autoPlay = () => {
         const activePadIds = activePads.map((activePad) => {
             return +activePad.id;
         });
@@ -261,49 +256,40 @@ document.addEventListener("DOMContentLoaded", async () => {
                 +pad.id
             ).length;
 
-            if (mode === "Mode: Classic") classicMode(isActive, surroundingNum, padId, pad);
-            if (mode === "Mode: Random") randomMode(isActive, padId, pad);
+            if (mode === "Mode: Classic") classicMode(pad, padId, isActive, surroundingNum);
+            if (mode === "Mode: Random") randomMode(pad, padId, isActive);
         });
         generationController();
     };
 
     /**
-     * @function createFrequencyMaps map pads to musical notes, return primary frequencies list
-     */
-    const createFrequencyMaps = (padId: number) => {
-        const [padNotes, keyChangeNotes] = calculateNotes(gridSize - padId);
-
-        frequencyList.push(padNotes);
-        keyChangeFrequencyList.push(keyChangeNotes);
-
-        return padNotes;
-    };
-
-    /**
-     * @function allPads.forEach grid setup
+     * @function allPads.forEach grid setup / calculate frequencies associated with each pad
      * @function clickEvent select/de-select pads individually
      *
-     * @function createFrequencyMap map pads to musical notes
      * @function playMusic create/start/stop pad oscillator
      */
     allPads.forEach((pad, padId) => {
-        const boxNumStr = `${gridSize - padId}`;
-        pad.id = boxNumStr;
-
-        // Determine what note is associated with each pad
-        const padNotes = createFrequencyMaps(padId);
+        const boxNum = gridSize - padId;
+        const [padNotes, keyChangeNotes] = calculateNotes(boxNum);
+        pad.id = `${boxNum}`;
 
         pad.addEventListener("click", () => {
+            // Select/de-select/preview notes for autoPlay
             if (!isPlaying) {
                 if (!activePads.includes(pad)) {
                     activePads.push(pad);
                     pad.classList.add("active");
-
-                    playMusic(padNotes);
+                    playMusic(padNotes as number);
                 } else {
                     activePads = activePads.filter((item) => item !== pad);
                     pad.classList.remove("active");
                 }
+            }
+
+            if (isPlaying) {
+                // Play notes (controlled by autoPlay)
+                if (Math.floor(generation / 4) % 2 === 0) playMusic(padNotes as number);
+                else playMusic(keyChangeNotes as number);
             }
         });
     });
@@ -319,8 +305,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         updateState();
 
         if (isPlaying === true) {
-            play();
-            timer = setInterval(() => play(), speed);
+            autoPlay();
+            timer = setInterval(() => autoPlay(), speed);
         } else clearInterval(timer);
     });
 
@@ -332,7 +318,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     /**
-     * @event click @function resetState reset automaton
+     * @event click change mode
      */
     modeButton?.addEventListener("click", () => {
         if (mode === "Mode: Random") mode = "Mode: Classic";
