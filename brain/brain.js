@@ -222,6 +222,7 @@ document.addEventListener("DOMContentLoaded", () => __awaiter(void 0, void 0, vo
      * @function play start cellular automaton transformations
      */
     const play = () => {
+        grid.click();
         const activePadIds = activePads.map((activePad) => {
             return +activePad.id;
         });

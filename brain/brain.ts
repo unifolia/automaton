@@ -62,7 +62,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     type PadArray = HTMLDivElement[];
     const allPads = [...document.querySelectorAll(".pad")] as PadArray;
     let activePads: PadArray = [];
-    const grid = document.querySelector(".grid");
+    const grid: HTMLElement = document.querySelector(".grid")!;
     const gridSize = allPads.length;
     const frequencyList: number[] = [];
     const keyChangeFrequencyList: number[] = [];
@@ -240,6 +240,8 @@ document.addEventListener("DOMContentLoaded", async () => {
      * @function play start cellular automaton transformations
      */
     const play = () => {
+        grid.click();
+
         const activePadIds = activePads.map((activePad) => {
             return +activePad.id;
         });
