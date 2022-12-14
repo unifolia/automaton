@@ -100,10 +100,10 @@ button:hover::after {
     background: var(--white);
 }
 
-/* .playButton,
+.playButton,
 .modeButton {
     display: none;
-} */
+}
 
 @media (min-width: 620px) and (min-height: 580px) {
     .pad {
