@@ -20,6 +20,8 @@ class Synth {
         this.gainNode = this.audioContext.createGain();
         this.gainNode.gain.value = 0.1;
         this.gainNode.connect(this.audioContext.destination);
+
+        console.log(this.audioContext, "create audio context");
     }
 }
 
