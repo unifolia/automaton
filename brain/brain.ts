@@ -126,7 +126,7 @@ document.addEventListener("DOMContentLoaded", async () => {
      */
     allPads.forEach((pad, padId) => {
         const boxNum = gridSize - padId;
-        const [padNotes, keyChangeNotes] = calculateNotes(boxNum);
+        const [padNotes, keyChangeNotes] = calculateNotes(boxNum, gridSize);
         pad.id = `${boxNum}`;
 
         pad.addEventListener("click", () => {

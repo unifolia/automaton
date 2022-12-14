@@ -4,7 +4,7 @@
  * @oscillatoreEngineType random waveform type at generation
  */
 class Synth {
-    types: string[];
+    private types: string[];
     oscillatorEngine: OscillatorNode;
     audioContext: AudioContext;
     gainNode: GainNode;

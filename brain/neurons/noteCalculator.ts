@@ -4,10 +4,12 @@
  *
  * @description: I never want to do this math ever again
  */
-const calculateNotes = (padId: number) => {
+const calculateNotes = (padId: number, gridSize: number) => {
+    const rowLen = Math.sqrt(gridSize);
+
     const tuning = 440;
     const A440 = Math.pow(2, 1 / 12);
-    const row = Math.floor((padId - 1) / 8) + 1;
+    const row = Math.floor((padId - 1) / rowLen) + 1;
     padId = padId - row * 5 - 17;
     const octave = Math.floor(padId / 7 + 2);
 
