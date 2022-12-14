@@ -5,23 +5,18 @@
     --buttoncircle: #9eb08c;
 }
 
-html {
-    height: 100vh;
-    box-sizing: border-box;
-    background: linear-gradient(-45deg, #26381d, #656d43, #2cbb99, #dae3be, #442744);
-    background-size: 400% 400%;
-    animation: gradient 15s ease infinite;
-}
-
 body {
-    height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100%;
+
+    margin: 35px 0;
     min-width: 280px;
-    margin: 35px;
     box-sizing: border-box;
+
+    background: linear-gradient(-45deg, #26381d, #656d43, #2cbb99, #dae3be, #442744);
+    background-size: 400% 400%;
+    animation: gradient 15s ease infinite;
 }
 
 .grid {
@@ -29,8 +24,8 @@ body {
     flex-wrap: wrap;
     flex-direction: row-reverse;
     justify-content: center;
-    height: 100vh;
-    max-height: 460px;
+
+    height: 100%;
     width: calc(35px * 8);
 }
 
@@ -49,12 +44,14 @@ body {
 
 .pad {
     display: inline-block;
-    box-sizing: border-box;
+
     height: 35px;
     width: 35px;
+    box-sizing: border-box;
+
+    cursor: pointer;
     border: 1px solid var(--white);
     border-radius: 50%;
-    cursor: pointer;
 }
 
 .pad.active {
@@ -70,13 +67,14 @@ body {
 button {
     position: relative;
     width: 100px;
-    cursor: pointer;
     margin: 15px;
     padding: 20px;
-    border-radius: 25px;
+
     border: none;
+    border-radius: 25px;
     font-family: monospace;
     background: var(--white);
+    cursor: pointer;
 }
 
 button::after {
@@ -105,7 +103,7 @@ button:hover::after {
     display: none;
 }
 
-@media (min-width: 620px) and (min-height: 580px) {
+@media (min-width: 620px) and (min-height: 400px) {
     .pad {
         height: 60px;
         width: 60px;
