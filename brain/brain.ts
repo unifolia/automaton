@@ -127,6 +127,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     allPads.forEach((pad, padId) => {
         const boxNum = gridSize - padId;
         const [padNotes, keyChangeNotes] = calculateNotes(boxNum, gridSize);
+        const currentNotes = Math.floor(generation / 4) % 2 === 0 ? padNotes : keyChangeNotes;
+
         pad.id = `${boxNum}`;
 
         pad.addEventListener("click", () => {
@@ -135,7 +137,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                 if (!activePads.includes(pad)) {
                     activePads.push(pad);
                     pad.classList.add("active");
-                    playMusic(padNotes as number, arrayBuffer, speed);
+
+                    playMusic(currentNotes as number, arrayBuffer, speed);
                 } else {
                     activePads = activePads.filter((item) => item !== pad);
                     pad.classList.remove("active");
@@ -144,9 +147,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             if (isPlaying) {
                 // Play notes (controlled by autoPlay)
-                if (Math.floor(generation / 4) % 2 === 0)
-                    playMusic(padNotes as number, arrayBuffer, speed);
-                else playMusic(keyChangeNotes as number, arrayBuffer, speed);
+                playMusic(currentNotes as number, arrayBuffer, speed);
             }
         });
     });
