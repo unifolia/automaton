@@ -127,11 +127,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     allPads.forEach((pad, padId) => {
         const boxNum = gridSize - padId;
         const [padNotes, keyChangeNotes] = calculateNotes(boxNum, gridSize);
-        const currentNotes = Math.floor(generation / 4) % 2 === 0 ? padNotes : keyChangeNotes;
 
         pad.id = `${boxNum}`;
 
         pad.addEventListener("click", () => {
+            const currentNotes = Math.floor(generation / 4) % 2 === 0 ? padNotes : keyChangeNotes;
+
             // Select/de-select/preview notes for autoPlay
             if (!isPlaying) {
                 if (!activePads.includes(pad)) {
