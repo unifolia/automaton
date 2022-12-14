@@ -6,6 +6,6 @@
     "esbuild": "0.16.5"
   },
   "scripts": {
-    "build": "esbuild brain/brain.ts --bundle --minify --sourcemap --outfile=brain/brain.js"
+    "build": "esbuild brain/brain.ts --bundle --minify --outfile=brain/brain.js"
   }
 }

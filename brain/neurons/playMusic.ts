@@ -18,10 +18,14 @@ const playMusic = async (noteFreq: number, arrayBuffer: ArrayBuffer, speed: numb
         return convolver;
     };
 
+    console.log(synth.audioContext.state, "reverb created");
+
     const reverb = await createReverb();
     reverb.connect(synth.gainNode);
     synth.oscillatorEngine.connect(reverb);
     synth.oscillatorEngine.start();
+
+    console.log(synth.audioContext.state, "started");
 
     const noteBuffer = new Promise((res) => setTimeout(res, speed * 0.85));
     await noteBuffer.then(() => {
@@ -29,10 +33,14 @@ const playMusic = async (noteFreq: number, arrayBuffer: ArrayBuffer, speed: numb
         synth.oscillatorEngine.disconnect();
     });
 
+    console.log(synth.audioContext.state, "note stopped");
+
     const reverbBuffer = new Promise((res) => setTimeout(res, speed * 1.45));
     await reverbBuffer.then(() => {
         synth.audioContext.close();
     });
+
+    console.log(synth.audioContext.state, "reverb stopped / closed");
 };
 
 export default playMusic;
