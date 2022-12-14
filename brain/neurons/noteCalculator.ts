@@ -24,7 +24,7 @@ const calculateNotes = (padId: number, gridSize: number) => {
     return [
         // Standard notes / G major scale
         +(tuning * Math.pow(A440, padId)).toFixed(4),
-        // Key change / Bb Major
+        // ^ minor third key change / Bb Major
         +(tuning * Math.pow(A440, padId + 3)).toFixed(4),
     ];
 };
