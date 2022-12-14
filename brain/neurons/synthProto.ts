@@ -18,7 +18,7 @@ class Synth {
         this.oscillatorEngine.frequency.setValueAtTime(i, this.audioContext.currentTime);
 
         this.gainNode = this.audioContext.createGain();
-        this.gainNode.gain.value = 0.1;
+        this.gainNode.gain.value = 0.15;
         this.gainNode.connect(this.audioContext.destination);
     }
 }
