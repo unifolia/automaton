@@ -1,5 +1,11 @@
 {
   "devDependencies": {
     "typescript": "^4.9.4"
+  },
+  "dependencies": {
+    "esbuild": "0.16.5"
+  },
+  "scripts": {
+    "build": "esbuild brain/brain.ts --bundle --minify --sourcemap --outfile=brain/brain.js"
   }
 }
