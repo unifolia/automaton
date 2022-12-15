@@ -16,12 +16,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     const modeButton = document.querySelector(".modeButton");
 
     // Statistics
-
-    const automatonNumber = 3;
+    const mooreNum = 3;
     const speed = 2500;
-
     let mode = "Mode: Classic";
-    let audioContextHasBeenCreated: boolean = false;
     let isPlaying: boolean = false;
     let timer: number;
     let generation: number = 0;
@@ -29,14 +26,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Audio
     let waveformTypes = ["sawtooth", "sine", "square", "triangle"];
-
-    const cors = window.location.href.includes("file")
-        ? "https://cors-anywhere.herokuapp.com/"
-        : "";
-    let impulseResponse = await fetch(`${cors}https://jameslewis.io/assets/Output%201-2.wav`);
-    let automatonAudioContext: AudioContext;
-
+    let impulseResponse = await fetch(
+        `${
+            window.location.href.includes("file") ? "https://cors-anywhere.herokuapp.com/" : ""
+        }https://jameslewis.io/assets/Output%201-2.wav`
+    );
     let arrayBuffer: ArrayBuffer = await impulseResponse.arrayBuffer();
+    let automatonAudioContext: AudioContext;
     let reverbNode: ConvolverNode;
 
     /**
@@ -56,9 +52,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         clearInterval(timer);
         updateState();
 
-        activePads.forEach((pad) => {
-            pad.classList.remove("active");
-        });
+        activePads.forEach((pad) => pad.classList.remove("active"));
 
         generation = 0;
         generationLog = [];
@@ -94,12 +88,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         pad: HTMLDivElement,
         _padId: number,
         isActive: boolean,
-        surroundingNum: number
+        moores: number
     ) => {
         if (
-            (!isActive && surroundingNum === automatonNumber) ||
-            (isActive &&
-                (surroundingNum === automatonNumber || surroundingNum === automatonNumber - 1))
+            (!isActive && moores === mooreNum) ||
+            (isActive && (moores === mooreNum || moores === mooreNum - 1))
         ) {
             if (!activePads.includes(pad)) activePads.push(pad);
             if (!isActive) pad.classList.add("active");
@@ -132,18 +125,13 @@ document.addEventListener("DOMContentLoaded", async () => {
         gainNode.connect(automatonAudioContext.destination);
 
         const reverb = automatonAudioContext.createConvolver();
-        const bufferCopy = copyBuffer(arrayBuffer.slice(0));
-        reverb.buffer = await automatonAudioContext
-            .decodeAudioData(bufferCopy)
-            .then((convolution) => {
-                return convolution;
-            });
-
+        const impulseCopy = copyBuffer(arrayBuffer.slice(0));
+        reverb.buffer = await automatonAudioContext.decodeAudioData(impulseCopy);
+        reverb.connect(gainNode);
         reverbNode = reverb;
-        audioContextHasBeenCreated = true;
     };
 
-    const createAndPlayOscillator = async (i: number) => {
+    const createOscillatorNode = async (i: number) => {
         const oscillatorEngine = automatonAudioContext.createOscillator();
 
         oscillatorEngine.type = waveformTypes[Math.floor(Math.random() * 4)] as OscillatorType;
@@ -151,7 +139,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         oscillatorEngine.connect(reverbNode);
         oscillatorEngine.start();
-        console.log(automatonAudioContext, reverbNode, oscillatorEngine);
 
         const noteBuffer = new Promise((res) => setTimeout(res, speed * 0.85));
         await noteBuffer.then(() => {
@@ -160,11 +147,25 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     };
 
+    const modifyState = (pad: HTMLDivElement, currentNotes: number) => {
+        if (!isPlaying) {
+            if (!activePads.includes(pad)) {
+                activePads.push(pad);
+                pad.classList.add("active");
+
+                createOscillatorNode(currentNotes);
+            } else {
+                activePads = activePads.filter((item) => item !== pad);
+                pad.classList.remove("active");
+            }
+        }
+
+        if (isPlaying) createOscillatorNode(currentNotes);
+    };
+
     /**
      * @function allPads.forEach grid setup / calculate frequencies associated with each pad
      * @function clickEvent select/de-select pads individually
-     *
-     * @function playMusic create/start/stop pad oscillator
      */
     allPads.forEach((pad, padId) => {
         const boxNum = gridSize - padId;
@@ -175,23 +176,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         pad.addEventListener("click", () => {
             const currentNotes = Math.floor(generation / 4) % 2 === 0 ? padNotes : keyChangeNotes;
 
-            if (!audioContextHasBeenCreated) createAudioContext();
-            else {
-                // Select/de-select/preview notes for autoPlay
-                if (!isPlaying) {
-                    if (!activePads.includes(pad)) {
-                        activePads.push(pad);
-                        pad.classList.add("active");
-
-                        createAndPlayOscillator(currentNotes as number);
-                    } else {
-                        activePads = activePads.filter((item) => item !== pad);
-                        pad.classList.remove("active");
-                    }
-                }
-
-                if (isPlaying) createAndPlayOscillator(currentNotes as number);
-            }
+            if (automatonAudioContext === undefined) {
+                createAudioContext().then(() => modifyState(pad, currentNotes));
+            } else modifyState(pad, currentNotes);
         });
     });
 
@@ -199,16 +186,8 @@ document.addEventListener("DOMContentLoaded", async () => {
      * @function autoPlay start cellular automaton transformations
      */
     const autoPlay = () => {
-        const activePadIds = activePads.map((activePad) => {
-            return +activePad.id;
-        });
+        const activePadIds = activePads.map((activePad) => +activePad.id);
 
-        /**
-         * @function allPads.forEach calculate surrounding active elements, then sustain/kill element
-         * @tutorial https://en.wikipedia.org/wiki/Cellular_automaton
-         *
-         * @function generationController compare current pattern to previous pattern, destroy all if plateaued
-         */
         allPads.forEach((pad, padId) => {
             const isActive = pad.classList.contains("active");
             const surroundingNum = returnSurroundingElements(
@@ -230,10 +209,19 @@ document.addEventListener("DOMContentLoaded", async () => {
         isPlaying = !isPlaying;
         updateState();
 
-        if (isPlaying === true) {
-            autoPlay();
-            timer = setInterval(() => autoPlay(), speed);
-        } else clearInterval(timer);
+        if (automatonAudioContext === undefined) {
+            createAudioContext().then(() => {
+                if (isPlaying === true) {
+                    autoPlay();
+                    timer = setInterval(() => autoPlay(), speed);
+                } else clearInterval(timer);
+            });
+        } else {
+            if (isPlaying === true) {
+                autoPlay();
+                timer = setInterval(() => autoPlay(), speed);
+            } else clearInterval(timer);
+        }
     });
 
     resetButton?.addEventListener("click", () => {
