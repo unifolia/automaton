@@ -1,6 +1,6 @@
+import copyBuffer from "./neurons/copyBuffer";
 import calculateNotes from "./neurons/noteCalculator";
 import returnSurroundingElements from "./neurons/returnSurroundingElements";
-import playMusic from "./neurons/playMusic";
 
 document.addEventListener("DOMContentLoaded", async () => {
     // Grid/pad info
@@ -16,22 +16,28 @@ document.addEventListener("DOMContentLoaded", async () => {
     const modeButton = document.querySelector(".modeButton");
 
     // Statistics
+
     const automatonNumber = 3;
     const speed = 2500;
 
     let mode = "Mode: Classic";
-    let timer: number;
+    let audioContextHasBeenCreated: boolean = false;
     let isPlaying: boolean = false;
+    let timer: number;
     let generation: number = 0;
     let generationLog: Array<PadArray> = [];
 
-    // Audio components
-    // CORS for local development
+    // Audio
+    let waveformTypes = ["sawtooth", "sine", "square", "triangle"];
+
     const cors = window.location.href.includes("file")
         ? "https://cors-anywhere.herokuapp.com/"
         : "";
-    let response = await fetch(`${cors}https://jameslewis.io/assets/Output%201-2.wav`);
-    let arrayBuffer: ArrayBuffer = await response.arrayBuffer();
+    let impulseResponse = await fetch(`${cors}https://jameslewis.io/assets/Output%201-2.wav`);
+    let automatonAudioContext: AudioContext;
+
+    let arrayBuffer: ArrayBuffer = await impulseResponse.arrayBuffer();
+    let reverbNode: ConvolverNode;
 
     /**
      * @function updateState update elements when isPlaying changes
@@ -118,6 +124,42 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     };
 
+    const createAudioContext = async () => {
+        automatonAudioContext = new window.AudioContext();
+
+        const gainNode = automatonAudioContext.createGain();
+        gainNode.gain.value = 0.12;
+        gainNode.connect(automatonAudioContext.destination);
+
+        const reverb = automatonAudioContext.createConvolver();
+        const bufferCopy = copyBuffer(arrayBuffer.slice(0));
+        reverb.buffer = await automatonAudioContext
+            .decodeAudioData(bufferCopy)
+            .then((convolution) => {
+                return convolution;
+            });
+
+        reverbNode = reverb;
+        audioContextHasBeenCreated = true;
+    };
+
+    const createAndPlayOscillator = async (i: number) => {
+        const oscillatorEngine = automatonAudioContext.createOscillator();
+
+        oscillatorEngine.type = waveformTypes[Math.floor(Math.random() * 4)] as OscillatorType;
+        oscillatorEngine.frequency.setValueAtTime(i, automatonAudioContext.currentTime);
+
+        oscillatorEngine.connect(reverbNode);
+        oscillatorEngine.start();
+        console.log(automatonAudioContext, reverbNode, oscillatorEngine);
+
+        const noteBuffer = new Promise((res) => setTimeout(res, speed * 0.85));
+        await noteBuffer.then(() => {
+            oscillatorEngine.stop();
+            oscillatorEngine.disconnect();
+        });
+    };
+
     /**
      * @function allPads.forEach grid setup / calculate frequencies associated with each pad
      * @function clickEvent select/de-select pads individually
@@ -133,22 +175,22 @@ document.addEventListener("DOMContentLoaded", async () => {
         pad.addEventListener("click", () => {
             const currentNotes = Math.floor(generation / 4) % 2 === 0 ? padNotes : keyChangeNotes;
 
-            // Select/de-select/preview notes for autoPlay
-            if (!isPlaying) {
-                if (!activePads.includes(pad)) {
-                    activePads.push(pad);
-                    pad.classList.add("active");
+            if (!audioContextHasBeenCreated) createAudioContext();
+            else {
+                // Select/de-select/preview notes for autoPlay
+                if (!isPlaying) {
+                    if (!activePads.includes(pad)) {
+                        activePads.push(pad);
+                        pad.classList.add("active");
 
-                    playMusic(currentNotes as number, arrayBuffer, speed);
-                } else {
-                    activePads = activePads.filter((item) => item !== pad);
-                    pad.classList.remove("active");
+                        createAndPlayOscillator(currentNotes as number);
+                    } else {
+                        activePads = activePads.filter((item) => item !== pad);
+                        pad.classList.remove("active");
+                    }
                 }
-            }
 
-            if (isPlaying) {
-                // Play notes (controlled by autoPlay)
-                playMusic(currentNotes as number, arrayBuffer, speed);
+                if (isPlaying) createAndPlayOscillator(currentNotes as number);
             }
         });
     });
