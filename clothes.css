@@ -33,12 +33,12 @@ body {
     opacity: 0.5;
 }
 
-.grid.playing,
+/* .grid.playing,
 .grid.playing .pad {
     cursor: not-allowed;
-}
+} */
 
-.grid:not(.playing) .pad:not(.active):hover {
+.grid .pad:not(.active):hover {
     background-color: var(--padhover);
 }
 
