@@ -82,42 +82,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     };
 
     /**
-     * @function classicMode play notes according to Conyway's Game of Life
-     */
-    const classicMode = (
-        pad: HTMLDivElement,
-        _padId: number,
-        isActive: boolean,
-        moores: number
-    ) => {
-        if (
-            (!isActive && moores === mooreNum) ||
-            (isActive && (moores === mooreNum || moores === mooreNum - 1))
-        ) {
-            if (!activePads.includes(pad)) activePads.push(pad);
-            if (!isActive) pad.classList.add("active");
-            pad.click();
-        } else {
-            activePads = activePads.filter((item) => item !== pad);
-            if (isActive) pad.classList.remove("active");
-        }
-    };
-
-    /**
-     * @function randomMode every note has 1/10 change in playing
-     */
-    const randomMode = (pad: HTMLDivElement, _padId: number, isActive: boolean) => {
-        if (Math.floor(Math.random() * 10) === 0) {
-            if (!activePads.includes(pad)) activePads.push(pad);
-            if (!isActive) pad.classList.add("active");
-            pad.click();
-        } else {
-            activePads = activePads.filter((item) => item !== pad);
-            if (isActive) pad.classList.remove("active");
-        }
-    };
-
-    /**
      * @function createAudioContext create audio context / gain / convolver
      */
     const createAudioContext = async () => {
@@ -191,6 +155,42 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     /**
+     * @function playClassicMode play notes according to Conyway's Game of Life
+     */
+    const playClassicMode = (
+        pad: HTMLDivElement,
+        _padId: number,
+        isActive: boolean,
+        moores: number
+    ) => {
+        if (
+            (!isActive && moores === mooreNum) ||
+            (isActive && (moores === mooreNum || moores === mooreNum - 1))
+        ) {
+            if (!activePads.includes(pad)) activePads.push(pad);
+            if (!isActive) pad.classList.add("active");
+            pad.click();
+        } else {
+            activePads = activePads.filter((item) => item !== pad);
+            if (isActive) pad.classList.remove("active");
+        }
+    };
+
+    /**
+     * @function playRandomMode every note has 1/10 change in playing
+     */
+    const playRandomMode = (pad: HTMLDivElement, _padId: number, isActive: boolean) => {
+        if (Math.floor(Math.random() * 10) === 0) {
+            if (!activePads.includes(pad)) activePads.push(pad);
+            if (!isActive) pad.classList.add("active");
+            pad.click();
+        } else {
+            activePads = activePads.filter((item) => item !== pad);
+            if (isActive) pad.classList.remove("active");
+        }
+    };
+
+    /**
      * @function autoPlay start cellular automaton transformations
      */
     const autoPlay = () => {
@@ -204,8 +204,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                 +pad.id
             ).length;
 
-            if (mode === "Mode: Classic") classicMode(pad, padId, isActive, surroundingNum);
-            if (mode === "Mode: Random") randomMode(pad, padId, isActive);
+            if (mode === "Mode: Classic") playClassicMode(pad, padId, isActive, surroundingNum);
+            if (mode === "Mode: Random") playRandomMode(pad, padId, isActive);
         });
         generationController();
     };
