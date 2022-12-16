@@ -104,14 +104,14 @@ button:hover::after {
 }
 
 @media (min-width: 620px) and (min-height: 400px) {
+    .grid {
+        max-height: 580px;
+        width: calc(60px * 8);
+    }
     .pad {
         height: 60px;
         width: 60px;
         border: 0.1px solid var(--white);
-    }
-    .grid {
-        max-height: 580px;
-        width: calc(60px * 8);
     }
     .playButton,
     .modeButton {

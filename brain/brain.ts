@@ -15,10 +15,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     const resetButton = document.querySelector(".resetButton");
     const modeButton = document.querySelector(".modeButton");
 
-    // Statistics
+    // Statistics / settings
+    let mode = "Mode: Classic";
     const mooreNum = 3;
     const speed = 2500;
-    let mode = "Mode: Classic";
     let isPlaying: boolean = false;
     let timer: number;
     let generation: number = 0;
@@ -117,6 +117,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     };
 
+    /**
+     * @function createAudioContext create audio context / gain / convolver
+     */
     const createAudioContext = async () => {
         automatonAudioContext = new window.AudioContext();
 
@@ -131,6 +134,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         reverbNode = reverb;
     };
 
+    /**
+     * @function createOscillator create individual oscillatoir
+     */
     const createOscillatorNode = async (i: number) => {
         const oscillatorEngine = automatonAudioContext.createOscillator();
 
@@ -147,7 +153,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     };
 
-    const modifyState = (pad: HTMLDivElement, currentNotes: number) => {
+    /**
+     * @function padAction
+     */
+    const padAction = (pad: HTMLDivElement, currentNotes: number) => {
         if (!isPlaying) {
             if (!activePads.includes(pad)) {
                 activePads.push(pad);
@@ -170,15 +179,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     allPads.forEach((pad, padId) => {
         const boxNum = gridSize - padId;
         const [padNotes, keyChangeNotes] = calculateNotes(boxNum, gridSize);
-
         pad.id = `${boxNum}`;
 
         pad.addEventListener("click", () => {
             const currentNotes = Math.floor(generation / 4) % 2 === 0 ? padNotes : keyChangeNotes;
 
             if (automatonAudioContext === undefined) {
-                createAudioContext().then(() => modifyState(pad, currentNotes));
-            } else modifyState(pad, currentNotes);
+                createAudioContext().then(() => padAction(pad, currentNotes));
+            } else padAction(pad, currentNotes);
         });
     });
 
@@ -203,6 +211,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     };
 
     /**
+     * @function setUpAutoPlay setInterval to repeat autoPlay
+     */
+    const setUpAutoPlay = () => {
+        if (isPlaying === true) {
+            autoPlay();
+            timer = setInterval(() => autoPlay(), speed);
+        } else clearInterval(timer);
+    };
+
+    /**
      * @functions button click events
      */
     playButton?.addEventListener("click", () => {
@@ -210,17 +228,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         updateState();
 
         if (automatonAudioContext === undefined) {
-            createAudioContext().then(() => {
-                if (isPlaying === true) {
-                    autoPlay();
-                    timer = setInterval(() => autoPlay(), speed);
-                } else clearInterval(timer);
-            });
+            createAudioContext().then(() => setUpAutoPlay());
         } else {
-            if (isPlaying === true) {
-                autoPlay();
-                timer = setInterval(() => autoPlay(), speed);
-            } else clearInterval(timer);
+            setUpAutoPlay();
         }
     });
 
