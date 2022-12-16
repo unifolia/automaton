@@ -88,7 +88,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         automatonAudioContext = new window.AudioContext();
 
         const gainNode = automatonAudioContext.createGain();
-        gainNode.gain.value = 0.12;
+        gainNode.gain.value = 0.0875;
         gainNode.connect(automatonAudioContext.destination);
 
         const reverb = automatonAudioContext.createConvolver();
@@ -110,7 +110,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         oscillatorEngine.connect(reverbNode);
         oscillatorEngine.start();
 
-        const noteBuffer = new Promise((res) => setTimeout(res, speed * 0.85));
+        const noteBuffer = new Promise((res) => setTimeout(res, speed));
         await noteBuffer.then(() => {
             oscillatorEngine.stop();
             oscillatorEngine.disconnect();
