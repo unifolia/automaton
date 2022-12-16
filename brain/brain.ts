@@ -88,7 +88,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         automatonAudioContext = new window.AudioContext();
 
         const gainNode = automatonAudioContext.createGain();
-        gainNode.gain.value = 0.0875;
+        gainNode.gain.value = 0.0666; // 😈
         gainNode.connect(automatonAudioContext.destination);
 
         const reverb = automatonAudioContext.createConvolver();
