@@ -1,6 +1,6 @@
+import copyBuffer from "./neurons/copyBuffer";
 import calculateNotes from "./neurons/noteCalculator";
 import returnSurroundingElements from "./neurons/returnSurroundingElements";
-import playMusic from "./neurons/playMusic";
 
 document.addEventListener("DOMContentLoaded", async () => {
     // Grid/pad info
@@ -15,23 +15,25 @@ document.addEventListener("DOMContentLoaded", async () => {
     const resetButton = document.querySelector(".resetButton");
     const modeButton = document.querySelector(".modeButton");
 
-    // Statistics
-    const automatonNumber = 3;
-    const speed = 2500;
-
+    // Statistics / settings
     let mode = "Mode: Classic";
-    let timer: number;
+    const mooreNum = 3;
+    const speed = 2500;
     let isPlaying: boolean = false;
+    let timer: number;
     let generation: number = 0;
     let generationLog: Array<PadArray> = [];
 
-    // Audio components
-    // CORS for local development
-    const cors = window.location.href.includes("file")
-        ? "https://cors-anywhere.herokuapp.com/"
-        : "";
-    let response = await fetch(`${cors}https://jameslewis.io/assets/Output%201-2.wav`);
-    let arrayBuffer: ArrayBuffer = await response.arrayBuffer();
+    // Audio
+    let waveformTypes = ["sawtooth", "sine", "square", "triangle"];
+    let impulseResponse = await fetch(
+        `${
+            window.location.href.includes("file") ? "https://cors-anywhere.herokuapp.com/" : ""
+        }https://jameslewis.io/assets/Output%201-2.wav`
+    );
+    let arrayBuffer: ArrayBuffer = await impulseResponse.arrayBuffer();
+    let automatonAudioContext: AudioContext;
+    let reverbNode: ConvolverNode;
 
     /**
      * @function updateState update elements when isPlaying changes
@@ -50,9 +52,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         clearInterval(timer);
         updateState();
 
-        activePads.forEach((pad) => {
-            pad.classList.remove("active");
-        });
+        activePads.forEach((pad) => pad.classList.remove("active"));
 
         generation = 0;
         generationLog = [];
@@ -82,18 +82,90 @@ document.addEventListener("DOMContentLoaded", async () => {
     };
 
     /**
-     * @function classicMode play notes according to Conyway's Game of Life
+     * @function createAudioContext create audio context / gain / convolver
      */
-    const classicMode = (
+    const createAudioContext = async () => {
+        automatonAudioContext = new window.AudioContext();
+
+        const gainNode = automatonAudioContext.createGain();
+        gainNode.gain.value = 0.12;
+        gainNode.connect(automatonAudioContext.destination);
+
+        const reverb = automatonAudioContext.createConvolver();
+        const impulseCopy = copyBuffer(arrayBuffer.slice(0));
+        reverb.buffer = await automatonAudioContext.decodeAudioData(impulseCopy);
+        reverb.connect(gainNode);
+        reverbNode = reverb;
+    };
+
+    /**
+     * @function createOscillator create individual oscillatoir
+     */
+    const createOscillatorNode = async (i: number) => {
+        const oscillatorEngine = automatonAudioContext.createOscillator();
+
+        oscillatorEngine.type = waveformTypes[Math.floor(Math.random() * 4)] as OscillatorType;
+        oscillatorEngine.frequency.setValueAtTime(i, automatonAudioContext.currentTime);
+
+        oscillatorEngine.connect(reverbNode);
+        oscillatorEngine.start();
+
+        const noteBuffer = new Promise((res) => setTimeout(res, speed * 0.85));
+        await noteBuffer.then(() => {
+            oscillatorEngine.stop();
+            oscillatorEngine.disconnect();
+        });
+    };
+
+    /**
+     * @function padAction
+     */
+    const padAction = (pad: HTMLDivElement, currentNotes: number) => {
+        if (!isPlaying) {
+            if (!activePads.includes(pad)) {
+                activePads.push(pad);
+                pad.classList.add("active");
+
+                createOscillatorNode(currentNotes);
+            } else {
+                activePads = activePads.filter((item) => item !== pad);
+                pad.classList.remove("active");
+            }
+        }
+
+        if (isPlaying) createOscillatorNode(currentNotes);
+    };
+
+    /**
+     * @function allPads.forEach grid setup / calculate frequencies associated with each pad
+     * @function clickEvent select/de-select pads individually
+     */
+    allPads.forEach((pad, padId) => {
+        const boxNum = gridSize - padId;
+        const [padNotes, keyChangeNotes] = calculateNotes(boxNum, gridSize);
+        pad.id = `${boxNum}`;
+
+        pad.addEventListener("click", () => {
+            const currentNotes = Math.floor(generation / 4) % 2 === 0 ? padNotes : keyChangeNotes;
+
+            if (automatonAudioContext === undefined) {
+                createAudioContext().then(() => padAction(pad, currentNotes));
+            } else padAction(pad, currentNotes);
+        });
+    });
+
+    /**
+     * @function playClassicMode play notes according to Conyway's Game of Life
+     */
+    const playClassicMode = (
         pad: HTMLDivElement,
         _padId: number,
         isActive: boolean,
-        surroundingNum: number
+        moores: number
     ) => {
         if (
-            (!isActive && surroundingNum === automatonNumber) ||
-            (isActive &&
-                (surroundingNum === automatonNumber || surroundingNum === automatonNumber - 1))
+            (!isActive && moores === mooreNum) ||
+            (isActive && (moores === mooreNum || moores === mooreNum - 1))
         ) {
             if (!activePads.includes(pad)) activePads.push(pad);
             if (!isActive) pad.classList.add("active");
@@ -105,9 +177,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     };
 
     /**
-     * @function randomMode every note has 1/10 change in playing
+     * @function playRandomMode every note has 1/10 change in playing
      */
-    const randomMode = (pad: HTMLDivElement, _padId: number, isActive: boolean) => {
+    const playRandomMode = (pad: HTMLDivElement, _padId: number, isActive: boolean) => {
         if (Math.floor(Math.random() * 10) === 0) {
             if (!activePads.includes(pad)) activePads.push(pad);
             if (!isActive) pad.classList.add("active");
@@ -119,54 +191,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     };
 
     /**
-     * @function allPads.forEach grid setup / calculate frequencies associated with each pad
-     * @function clickEvent select/de-select pads individually
-     *
-     * @function playMusic create/start/stop pad oscillator
-     */
-    allPads.forEach((pad, padId) => {
-        const boxNum = gridSize - padId;
-        const [padNotes, keyChangeNotes] = calculateNotes(boxNum, gridSize);
-
-        pad.id = `${boxNum}`;
-
-        pad.addEventListener("click", () => {
-            const currentNotes = Math.floor(generation / 4) % 2 === 0 ? padNotes : keyChangeNotes;
-
-            // Select/de-select/preview notes for autoPlay
-            if (!isPlaying) {
-                if (!activePads.includes(pad)) {
-                    activePads.push(pad);
-                    pad.classList.add("active");
-
-                    playMusic(currentNotes as number, arrayBuffer, speed);
-                } else {
-                    activePads = activePads.filter((item) => item !== pad);
-                    pad.classList.remove("active");
-                }
-            }
-
-            if (isPlaying) {
-                // Play notes (controlled by autoPlay)
-                playMusic(currentNotes as number, arrayBuffer, speed);
-            }
-        });
-    });
-
-    /**
      * @function autoPlay start cellular automaton transformations
      */
     const autoPlay = () => {
-        const activePadIds = activePads.map((activePad) => {
-            return +activePad.id;
-        });
+        const activePadIds = activePads.map((activePad) => +activePad.id);
 
-        /**
-         * @function allPads.forEach calculate surrounding active elements, then sustain/kill element
-         * @tutorial https://en.wikipedia.org/wiki/Cellular_automaton
-         *
-         * @function generationController compare current pattern to previous pattern, destroy all if plateaued
-         */
         allPads.forEach((pad, padId) => {
             const isActive = pad.classList.contains("active");
             const surroundingNum = returnSurroundingElements(
@@ -175,10 +204,20 @@ document.addEventListener("DOMContentLoaded", async () => {
                 +pad.id
             ).length;
 
-            if (mode === "Mode: Classic") classicMode(pad, padId, isActive, surroundingNum);
-            if (mode === "Mode: Random") randomMode(pad, padId, isActive);
+            if (mode === "Mode: Classic") playClassicMode(pad, padId, isActive, surroundingNum);
+            if (mode === "Mode: Random") playRandomMode(pad, padId, isActive);
         });
         generationController();
+    };
+
+    /**
+     * @function setUpAutoPlay setInterval to repeat autoPlay
+     */
+    const setUpAutoPlay = () => {
+        if (isPlaying === true) {
+            autoPlay();
+            timer = setInterval(() => autoPlay(), speed);
+        } else clearInterval(timer);
     };
 
     /**
@@ -188,10 +227,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         isPlaying = !isPlaying;
         updateState();
 
-        if (isPlaying === true) {
-            autoPlay();
-            timer = setInterval(() => autoPlay(), speed);
-        } else clearInterval(timer);
+        if (automatonAudioContext === undefined) {
+            createAudioContext().then(() => setUpAutoPlay());
+        } else {
+            setUpAutoPlay();
+        }
     });
 
     resetButton?.addEventListener("click", () => {
