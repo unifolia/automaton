@@ -11,12 +11,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     const gridSize = allPads.length;
 
     // Buttons
-    const playButton = document.querySelector(".playButton");
-    const resetButton = document.querySelector(".resetButton");
-    const modeButton = document.querySelector(".modeButton");
+    const playButton: HTMLButtonElement = document.querySelector(".playButton")!;
+    const resetButton: HTMLButtonElement = document.querySelector(".resetButton")!;
+    const modeButton: HTMLButtonElement = document.querySelector(".modeButton")!;
 
     // Statistics / settings
-    let mode = "Mode: Classic";
+    const classic = "Classic";
+    const random = "Random";
+    const midiMode = "MIDI";
+    let currentMode = classic;
+
     const mooreNum = 3;
     const speed = 2500;
     let isPlaying: boolean = false;
@@ -82,6 +86,23 @@ document.addEventListener("DOMContentLoaded", async () => {
     };
 
     /**
+     * @function handleMIDI allow use of external MIDI controller
+     */
+    const startMIDI = () => {
+        navigator?.requestMIDIAccess().then((midiAccess: any): void | PromiseLike<void> => {
+            type MIDIResponse = { data: [number, number, number] };
+
+            midiAccess.inputs.forEach(
+                (entry: any) =>
+                    (entry.onmidimessage = (event: MIDIResponse) => {
+                        const [pad] = allPads.filter((pad) => +pad.id === event.data[1] - 42);
+                        if (pad && currentMode === midiMode) pad.click();
+                    })
+            );
+        }, null);
+    };
+
+    /**
      * @function createAudioContext create audio context / gain / convolver
      */
     const createAudioContext = async () => {
@@ -96,6 +117,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         reverb.buffer = await automatonAudioContext.decodeAudioData(impulseCopy);
         reverb.connect(gainNode);
         reverbNode = reverb;
+
+        startMIDI();
     };
 
     /**
@@ -204,8 +227,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                 +pad.id
             ).length;
 
-            if (mode === "Mode: Classic") playClassicMode(pad, padId, isActive, surroundingNum);
-            if (mode === "Mode: Random") playRandomMode(pad, padId, isActive);
+            if (currentMode === classic) playClassicMode(pad, padId, isActive, surroundingNum);
+            if (currentMode === random) playRandomMode(pad, padId, isActive);
         });
         generationController();
     };
@@ -226,12 +249,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     playButton?.addEventListener("click", () => {
         isPlaying = !isPlaying;
         updateState();
-
-        if (automatonAudioContext === undefined) {
-            createAudioContext().then(() => setUpAutoPlay());
-        } else {
-            setUpAutoPlay();
-        }
+        setUpAutoPlay();
     });
 
     resetButton?.addEventListener("click", () => {
@@ -239,8 +257,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     modeButton?.addEventListener("click", () => {
-        if (mode === "Mode: Random") mode = "Mode: Classic";
-        else mode = "Mode: Random";
-        modeButton.innerHTML = mode;
+        if (automatonAudioContext === undefined) {
+            createAudioContext();
+        }
+
+        if (currentMode === classic) currentMode = random;
+        else if (currentMode === random) {
+            currentMode = midiMode;
+            document.body.classList.add(midiMode);
+        } else {
+            currentMode = classic;
+            document.body.classList.remove(midiMode);
+        }
+
+        modeButton.innerHTML = `Mode: ${currentMode}`;
     });
 });

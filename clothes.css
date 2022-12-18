@@ -33,10 +33,12 @@ body {
     opacity: 0.5;
 }
 
-/* .grid.playing,
-.grid.playing .pad {
+body.MIDI .pad,
+body.MIDI .playButton,
+body.MIDI .resetButton {
+    pointer-events: none;
     cursor: not-allowed;
-} */
+}
 
 .grid .pad:not(.active):hover {
     background-color: var(--padhover);
