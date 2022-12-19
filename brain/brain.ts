@@ -87,15 +87,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     /**
      * @function handleMIDI allow use of external MIDI controller
      */
-    const startMIDI = () => {
+    const handleMidi = () => {
         navigator?.requestMIDIAccess().then((midiAccess: any): void | PromiseLike<void> => {
-            type MIDIResponse = { data: [number, number, number] };
+            type MIDIResponse = { data: [number, number, number?] };
 
             midiAccess.inputs.forEach(
-                (entry: any) =>
-                    (entry.onmidimessage = (event: MIDIResponse) => {
-                        const [pad] = allPads.filter((pad) => +pad.id === event.data[1] - 35);
-                        if (pad && currentMode === midiMode) pad.click();
+                (input: any) =>
+                    (input.onmidimessage = (event: MIDIResponse) => {
+                        if (event.data.length === 3 && currentMode === midiMode)
+                            allPads[64 - (event.data[1] - 35)].click();
+                        else return;
                     })
             );
         }, null);
@@ -117,7 +118,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         reverb.connect(gainNode);
         reverbNode = reverb;
 
-        startMIDI();
+        handleMidi();
     };
 
     /**
