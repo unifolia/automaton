@@ -11,16 +11,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     const gridSize = allPads.length;
 
     // Buttons
-    const playButton: HTMLButtonElement = document.querySelector(".playButton")!;
-    const resetButton: HTMLButtonElement = document.querySelector(".resetButton")!;
-    const modeButton: HTMLButtonElement = document.querySelector(".modeButton")!;
+    const playButton = document.querySelector(".playButton");
+    const resetButton = document.querySelector(".resetButton");
+    const modeButton = document.querySelector(".modeButton");
 
     // Statistics / settings
-    const classic = "Classic";
-    const random = "Random";
-    const midiMode = "MIDI";
-    let currentMode = classic;
-
     const mooreNum = 3;
     const speed = 2500;
     let isPlaying: boolean = false;
@@ -28,7 +23,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     let generation: number = 0;
     let generationLog: Array<PadArray> = [];
 
-    // Audio
+    // Play modes
+    const classic = "Classic";
+    const random = "Random";
+    const midiMode = "MIDI";
+    let currentMode = classic;
+
+    // Audio components
     let waveformTypes = ["sawtooth", "sine", "square", "triangle"];
     let impulseResponse = await fetch(
         `${
@@ -65,8 +66,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     /**
      * @function generationController compare current pattern to previous pattern, destroy all if plateaued
-     *
-     * @function resetState reset grid
      */
     const generationController = () => {
         ++generation;
@@ -95,7 +94,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             midiAccess.inputs.forEach(
                 (entry: any) =>
                     (entry.onmidimessage = (event: MIDIResponse) => {
-                        const [pad] = allPads.filter((pad) => +pad.id === event.data[1] - 42);
+                        const [pad] = allPads.filter((pad) => +pad.id === event.data[1] - 35);
                         if (pad && currentMode === midiMode) pad.click();
                     })
             );
