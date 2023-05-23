@@ -1,87 +1,142 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <meta name="description" content="cellular automaton tune sorcerer" />
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="cellular automaton tune sorcerer" />
 
-        <link rel="icon" type="image/x-icon" href="./favicon.ico" />
-        <link rel="stylesheet" href="./clothes.css" />
-        <title>Automaton</title>
-    </head>
-    <body>
-        <main class="grid">
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="pad"></div>
-            <div class="controls">
-                <button class="playButton">Play</button>
-                <button class="resetButton">Reset</button>
-                <button class="modeButton">Mode: Classic</button>
-            </div>
-        </main>
-        <script src="./brain/brain.js"></script>
-    </body>
+    <link rel="icon" type="image/x-icon" href="./favicon.ico" />
+    <link rel="stylesheet" href="./clothes.css" />
+    <title>Automaton</title>
+  </head>
+  <body>
+    <main class="grid">
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="pad"></div>
+      <div class="controls">
+        <button class="playButton">Play</button>
+        <button class="resetButton">Reset</button>
+        <button class="modeButton">Mode: Classic</button>
+      </div>
+      <button class="aboutButton">Manual</button>
+      <div class="modal">
+        <section class="modalTitle">
+          <h1>Manual</h1>
+          <button class="closeButton">Close</button>
+        </section>
+        <section class="modalDetails">
+          <p>
+            This is a generative synthesizer. New notes will be generated every
+            2.5&nbspseconds - unless in MIDI mode. Every cluster of newly
+            generated notes will be referred to as a "generation" from here on.
+          </p>
+          <hr />
+          <div>
+            <h2 class="mode">Classic</h2>
+            <p>
+              The rules of Conway's Game of Life will be used to produce the
+              next generation.
+            </p>
+            <ul>
+              <li>Any live pad with two or three live neighbours survives.</li>
+              <li>
+                Any dead pad with three live neighbours becomes a live pad.
+              </li>
+              <li>
+                All other live pads die in the next generation. Similarly, all
+                other dead pads remain dead.
+              </li>
+            </ul>
+            <p>
+              Note that each pad's "neighbour" is defined by its numeric value.
+              For example, pads 8 and 9 are neighbours, despite being on
+              opposite sides of the grid.
+            </p>
+            <hr />
+          </div>
+          <div>
+            <h2 class="mode">Random</h2>
+            <p>
+              Each new generation will be unaffected by the previous generation.
+              Instead, each pad will have a 10% chance of activating upon the
+              next generation.
+            </p>
+            <hr />
+          </div>
+          <div>
+            <h2 class="mode">MIDI</h2>
+            <p>
+              Control the synthesizer using a MIDI controller. Though designed
+              with an 8x8 pad in mind (Ableton&nbspPush&nbsp2, etc.), any MIDI
+              controller can be used. Generations do not exist in this mode.
+            </p>
+          </div>
+        </section>
+      </div>
+    </main>
+    <script src="./brain/brain.js"></script>
+  </body>
 </html>

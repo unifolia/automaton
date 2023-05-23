@@ -14,6 +14,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     const playButton = document.querySelector(".playButton");
     const resetButton = document.querySelector(".resetButton");
     const modeButton = document.querySelector(".modeButton");
+    const aboutButton = document.querySelector(".aboutButton");
+    const closeButton = document.querySelector(".closeButton");
 
     // Statistics / settings
     const mooreNum = 3;
@@ -272,4 +274,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         modeButton.innerHTML = `Mode: ${currentMode}`;
     });
+
+    aboutButton?.addEventListener("click", () => {
+        document.querySelector('.modal')?.classList.add("showModal");
+    })
+
+    closeButton?.addEventListener("click", () => {
+        document.querySelector('.modal')?.classList.remove("showModal");
+    })
 });
