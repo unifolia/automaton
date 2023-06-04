@@ -16,6 +16,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const modeButton = document.querySelector(".modeButton");
     const aboutButton = document.querySelector(".aboutButton");
     const closeButton = document.querySelector(".closeButton");
+    const creditsButton = document.querySelector(".creditsButton");
 
     // Statistics / settings
     const mooreNum = 3;
@@ -36,7 +37,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     let impulseResponse = await fetch(
         `${
             window.location.href.includes("file") ? "https://cors-anywhere.herokuapp.com/" : ""
-        }https://jameslewis.io/assets/Output%201-2.wav`
+        }https://jameslewis.io/assets/wav.wav`
     );
     let arrayBuffer: ArrayBuffer = await impulseResponse.arrayBuffer();
     let automatonAudioContext: AudioContext;
@@ -111,7 +112,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         automatonAudioContext = new window.AudioContext();
 
         const gainNode = automatonAudioContext.createGain();
-        gainNode.gain.value = 0.0666; // 😈
+        gainNode.gain.value = 0.05; // 😈
         gainNode.connect(automatonAudioContext.destination);
 
         const reverb = automatonAudioContext.createConvolver();
@@ -281,5 +282,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     closeButton?.addEventListener("click", () => {
         document.querySelector('.modal')?.classList.remove("showModal");
+    })
+
+    creditsButton?.addEventListener("click", () => {
+        const credits = document.querySelector('.credits');
+        credits?.classList.toggle("showCredits");
+
+        if (credits?.classList.contains('showCredits') === true) {
+            window.scrollTo(0, document.body.scrollHeight);
+        }
     })
 });

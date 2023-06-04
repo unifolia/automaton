@@ -81,7 +81,16 @@
         <button class="resetButton">Reset</button>
         <button class="modeButton">Mode: Classic</button>
       </div>
+      <button class="creditsButton">Credits</button>
       <button class="aboutButton">Manual</button>
+      <div class="credits">
+        <p>Built by <a href="https://github.com/unifolia">James Lewis</a></p>
+        <p>
+          Reverb impulse response created at God City Studios in Salem, MA by
+          <a href="http://www.zachweeks.com/">Zach Weeks</a> and
+          <a href="https://www.andypitcher.com/">Andy Pitcher</a>
+        </p>
+      </div>
       <div class="modal">
         <section class="modalTitle">
           <h1>Manual</h1>
@@ -90,24 +99,27 @@
         <section class="modalDetails">
           <p>
             This is a generative synthesizer. New notes will be generated every
-            2.5&nbspseconds - unless in MIDI mode. Every cluster of newly
-            generated notes will be referred to as a "generation" from here on.
+            2.5&nbspseconds - unless in MIDI mode. Every&nbspcluster of newly
+            generated notes is a "generation." The&nbspkey will change +/-
+            3&nbspsemitones every 4 generations, alternating.
           </p>
           <hr />
           <div>
             <h2 class="mode">Classic</h2>
             <p>
               The rules of Conway's Game of Life will be used to produce the
-              next generation.
+              next generation:
             </p>
             <ul>
-              <li>Any live pad with two or three live neighbours survives.</li>
               <li>
-                Any dead pad with three live neighbours becomes a live pad.
+                Any live pad with two or three live neighbours will survive.
               </li>
               <li>
-                All other live pads die in the next generation. Similarly, all
-                other dead pads remain dead.
+                Any dead pad with three live neighbours will become a live pad.
+              </li>
+              <li>
+                All other live pads will die in the next generation. Similarly,
+                all other dead pads will remain dead.
               </li>
             </ul>
             <p>
@@ -121,8 +133,8 @@
             <h2 class="mode">Random</h2>
             <p>
               Each new generation will be unaffected by the previous generation.
-              Instead, each pad will have a 10% chance of activating upon the
-              next generation.
+              Instead, each individual pad will have a 10% chance of coming to
+              life during the new generation's nascency.
             </p>
             <hr />
           </div>

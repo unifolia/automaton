@@ -11,20 +11,22 @@ const calculateNotes = (padId: number, gridSize: number) => {
     const A440 = Math.pow(2, 1 / 12);
     const row = Math.floor((padId - 1) / rowLen) + 1;
     padId = padId - row * 5 - 17;
-    const octave = Math.floor(padId / 7 + 2);
+    const octave = Math.floor(padId / 7 + 2) * 5;
 
-    if ((padId + 7) % 7 === 0) padId = padId + octave * 5;
-    else if ((padId + 6) % 7 === 0) padId = padId + octave * 5 + 1;
-    else if ((padId + 5) % 7 === 0) padId = padId + octave * 5 + 2;
-    else if ((padId + 4) % 7 === 0) padId = padId + octave * 5 + 2;
-    else if ((padId + 3) % 7 === 0) padId = padId + octave * 5 + 3;
-    else if ((padId + 2) % 7 === 0) padId = padId + octave * 5 + 4;
-    else if ((padId + 1) % 7 === 0) padId = padId + octave * 5 + 5;
+    const modUtility = (id: number) => {
+        return id % 7 === 0;
+    }
+
+    if (modUtility((padId + 7))) padId = padId + octave;
+    else if (modUtility((padId + 6))) padId = padId + octave + 1;
+    else if (modUtility((padId + 5))) padId = padId + octave + 2;
+    else if (modUtility((padId + 4))) padId = padId + octave + 2;
+    else if (modUtility((padId + 3))) padId = padId + octave + 3;
+    else if (modUtility((padId + 2))) padId = padId + octave + 4;
+    else if (modUtility((padId + 1))) padId = padId + octave + 5;
 
     return [
-        // Standard notes / G major scale
         +(tuning * Math.pow(A440, padId)).toFixed(4),
-        // ^ minor third key change / Bb Major
         +(tuning * Math.pow(A440, padId + 3)).toFixed(4),
     ];
 };

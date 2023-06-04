@@ -50,10 +50,6 @@ body.MIDI .resetButton {
   opacity: 0.5;
 }
 
-.grid .pad:not(.active):hover {
-  background-color: var(--padhover);
-}
-
 .pad {
   display: inline-block;
 
@@ -102,14 +98,6 @@ button::after {
   background: var(--buttoncircle);
 }
 
-button:hover {
-  background-color: var(--padcolor);
-}
-
-button:hover::after {
-  background: var(--white);
-}
-
 .modal {
   display: none;
   flex-direction: column;
@@ -118,15 +106,16 @@ button:hover::after {
 
   height: 85vh;
   width: calc(100vw / 1.5);
-  max-height: 600px;
+  max-height: 625px;
   max-width: 1000px;
   padding: 30px;
   background: var(--modal);
   border-radius: 25px;
 }
 
-.modal.showModal {
+.showModal {
   display: flex;
+  z-index: 69;
 }
 
 .modalTitle {
@@ -145,8 +134,47 @@ button:hover::after {
   margin: 0;
 }
 
-.modalTitle .closeButton:hover {
-  background: #000000;
+.credits {
+  display: none;
+  font-size: 1rem;
+}
+
+.credits a {
+  color: var(--white);
+}
+
+.showCredits {
+  display: block;
+}
+
+@media (hover: hover) {
+  .grid .pad:not(.active):hover {
+    background-color: var(--padhover);
+  }
+
+  button:hover {
+    background-color: var(--padcolor);
+  }
+
+  button:hover::after {
+    background: var(--white);
+  }
+
+  .modalTitle .closeButton:hover {
+    background: #000000;
+  }
+}
+
+@media (min-width: 620px) {
+  .grid {
+    max-height: 580px;
+    width: calc(50px * 8);
+  }
+  .pad {
+    height: 50px;
+    width: 50px;
+    border: 0.1px solid var(--white);
+  }
 }
 
 @media (max-width: 750px) {
@@ -166,17 +194,8 @@ button:hover::after {
   .modalTitle .closeButton {
     margin-bottom: 20px;
   }
-}
-
-@media (min-width: 620px) and (min-height: 400px) {
-  .grid {
-    max-height: 580px;
-    width: calc(60px * 8);
-  }
-  .pad {
-    height: 60px;
-    width: 60px;
-    border: 0.1px solid var(--white);
+  .modalDetails {
+    margin-bottom: 120px;
   }
 }
 
