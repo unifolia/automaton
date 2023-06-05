@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="cellular automaton tune sorcerer details"
+    />
+
+    <link rel="icon" type="image/x-icon" href="../favicon.ico" />
+    <link rel="stylesheet" href="../clothes.css" />
+    <title>Automaton Details</title>
+  </head>
+  <body class="details">
+    <header>
+      <h1>Automaton Synth Details</h1>
+    </header>
+    <main>
+      <section>
+        <hgroup>
+          <h2>Lore</h2>
+          <h3>Unknown location, Yukon, Canada</h3>
+        </hgroup>
+        <p>
+          You're wandering through the forest. You're lost in the dense thicket.
+          There's a clearing. A wooden, cozy-looking cabin sits right in the
+          centre. You can see some sort of faint glow through the window. Huh?
+        </p>
+        <p>
+          You enter. You find the source of the glow: a strange, alien machine
+          in the corner of the main room. "...Hello? Hello?" No answer from
+          anywhere in the cabin. The machine piques your curiosity, naturally.
+          There are a few buttons. You hesitate for a few seconds. Your eyes are
+          glued to them. "Here goes nothing..."
+        </p>
+        <p>
+          The machine starts. You hear the whirr of its engine. Its eerie glow
+          gets brighter. Yellow lights blink in some weird, cryptic sequence.
+          Loud, organ-like notes bellow through a set of pipes at the top of the
+          machine.
+        </p>
+        <hr />
+      </section>
+      <section>
+        <h2>Technical Details</h2>
+        <p>Version: 1.3.6</p>
+        <p>
+          This synthesizer's source code can be found here:
+          <a
+            href="https://github.com/unifolia/cellular-automaton-tastiera/tree/main"
+            >GitHub</a
+          >
+        </p>
+        <p>
+          I'm going to give you a quick rundown on how it all works - but the
+          repository above contains all of the specifics.
+        </p>
+        <h3>Technology</h3>
+        <p>
+          This synthesizer was created using TypeScript. It uses the
+          <a
+            href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API"
+            >Web Audio API</a
+          >
+          to generate notes in the browser. It uses the aptly named
+          <a
+            href="https://developer.mozilla.org/en-US/docs/Web/API/Web_MIDI_API"
+            >Web MIDI API</a
+          >
+          for receiving MIDI.
+        </p>
+        <p>
+          Because notes are generated in and via the browser, no audio files
+          (.wav, .mp3, .ogg, etc.) are actually needed. The only file used is
+          the reverb impulse response, which is wrapped around each note. The
+          specific process is called
+          <a href="https://en.wikipedia.org/wiki/Convolution">convolution</a>.
+        </p>
+        <h3>Frequency Calculations</h3>
+        <p>
+          Each of the grid's pads are given an ID from 1 to 64, respectively.
+          This is in ascending order, so bottom left is 1 and top right is 64.
+        </p>
+        <p>
+          I'll use the first pad as an example. When that pad is pressed, its ID
+          of 1 is passed into a note calculator function. Some transposition is
+          needed so that the note is neither too low nor too high. The pad's ID
+          is changed to equal
+          <span>padId - row * 5 - 17</span>. The pad's <span>row</span> is
+          defined as <span>Math.floor((padId - 1) / rowLen) + 1</span>, with
+          <span>rowLen</span> being the square root of the grid size. In this
+          case, <span>row</span> = 1.
+        </p>
+        <p>
+          After this transposition, the first pad's ID is -19. So, why not just
+          subtract 20 from every ID if they're going to increase in sequential
+          order? This grid is not completely linear - like the grid of the
+          Ableton Push that it was inspired by - so duplicate notes have to be
+          taken into account. Each pad's final frequency is also defined by its
+          row, rather than just its initial ID.
+        </p>
+        <p>
+          The pad is close to its destination, but a couple of steps still have
+          to be taken. First, it must be ensured that the notes fit into some
+          sort of scale. A chromatic grid might sound fun, but it's largely
+          useless. Some safety nets are required. There are multiple ways of
+          interpreting it, but I chose the
+          <a href="https://en.wikipedia.org/wiki/Lydian_mode">Lydian mode</a> -
+          or the notes <span>1 2 3 ♯4 5 6 7</span>. Without getting too into the
+          weeds, that is accomplished by once again changing the pad's ID - this
+          time using
+          <span>padId = padId + Math.floor(padId / 7 + 2) * 5 + X</span>, with
+          <span>X</span> being some number between 0-5, depending on the initial
+          IDs fit into the Lydian scale (a fancy modulo operation is used to
+          ensure heptatonic compatibility). Don't forget your order of
+          operations!
+        </p>
+        <p>
+          Finally, that new ID (-26 in this case) is used to calculate the
+          frequency relative to (or, semitones from) A440. The math is
+          <span>frequency = +(440 * Math.pow(Math.pow(2, 1 / 12), padId))</span
+          >. This gives us a frequency of 97.9989 Hz for the first pad - or, the
+          note G2.
+          <a href="https://pages.mtu.edu/~suits/NoteFreqCalcs.html"
+            >Here are some notes from Michigan Technological University.</a
+          >
+        </p>
+        <h3>Generation Logging</h3>
+        <p>
+          As Classic Mode is based on the rules of
+          <a href="https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life"
+            >Conway's Game of Life</a
+          >, it's possible to run into
+          <a
+            href="https://en.wikipedia.org/wiki/Still_life_(cellular_automaton)"
+            >still lifes</a
+          >, which are unchanging clusters of notes. As the intention of this
+          mode is to have growing, blooming, and ever-changing chords, the idea
+          of the music devolving into the same notes repeating infinitely is...
+          not ideal, at least for this application.
+        </p>
+        <p>
+          That's why there is constant <span>Generation Logging</span> happening
+          in the background. With every generation comes a list of every active
+          pad. If the current list is identical to the previous list (i.e. still
+          life is happening), the game will reset itself.
+          <span>Technically</span> this could happen in Random Mode as well. If
+          it does happen, you will have witnessed the greatest statistical
+          improbability of all time.
+        </p>
+        <h3>Reverb</h3>
+        <p>
+          When the app loads, the impulse response's .wav file is retrieved and
+          turned into an array buffer. At the same time, an empty, generic
+          convolver node is created globally. Once the synthesizer starts
+          playing, every created note has its own reverb convolver created using
+          a copy of the impulse response's decoded array buffer. The note's own
+          convolver connects to its gain node, and the convolver/gain signal
+          path gets plugged into the global convolver.
+        </p>
+
+        <p>
+          You can think of the reverb/gain nodes as guitar pedals, and the
+          global convolver node as an amp with multiple inputs. In this
+          scenario, a copy of the reverb has to be "installed" onto the pedal.
+          As this pedal doesn't understand .wav files, an array buffer is used
+          instead (which is effectively that .wav file as 1s and 0s). Once
+          complete, the pedals get plugged into the amp. This process happens
+          for every single note!
+        </p>
+      </section>
+      <hr />
+      <a href="../index.html">Back</a>
+    </main>
+  </body>
+</html>

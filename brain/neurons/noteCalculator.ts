@@ -6,16 +6,16 @@
  */
 const calculateNotes = (padId: number, gridSize: number) => {
     const rowLen = Math.sqrt(gridSize);
-
     const tuning = 440;
     const A440 = Math.pow(2, 1 / 12);
     const row = Math.floor((padId - 1) / rowLen) + 1;
     padId = padId - row * 5 - 17;
-    const octave = Math.floor(padId / 7 + 2) * 5;
-
+    
     const modUtility = (id: number) => {
         return id % 7 === 0;
     }
+    
+    const octave = Math.floor(padId / 7 + 2) * 5;
 
     if (modUtility((padId + 7))) padId = padId + octave;
     else if (modUtility((padId + 6))) padId = padId + octave + 1;
