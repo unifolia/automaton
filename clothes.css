@@ -29,6 +29,18 @@ body {
   animation: gradient 15s ease infinite;
 }
 
+body.details {
+  background: #dae3be;
+
+  display: block;
+  margin: 35px 35px;
+}
+
+body.details span {
+  font-weight: bold;
+  font-style: italic;
+}
+
 body.MIDI .pad,
 body.MIDI .playButton,
 body.MIDI .resetButton {
@@ -106,6 +118,7 @@ button::after {
 
   height: 85vh;
   width: calc(100vw / 1.5);
+  min-height: 560px;
   max-height: 625px;
   max-width: 1000px;
   padding: 30px;
@@ -137,6 +150,10 @@ button::after {
 .credits {
   display: none;
   font-size: 1rem;
+}
+
+.modal a {
+  color: #000;
 }
 
 .credits a {
