@@ -29,7 +29,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Play modes
   const classic = "Classic";
   const random = "Random";
-  let currentMode = classic;
+  let currentMode = random;
 
   // Audio components
   let waveformTypes = ["sawtooth", "sine", "square", "triangle"];
