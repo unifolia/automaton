@@ -29,7 +29,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Play modes
   const classic = "Classic";
   const random = "Random";
-  const midiMode = "MIDI";
   let currentMode = classic;
 
   // Audio components
@@ -91,26 +90,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   };
 
   /**
-   * @function handleMIDI allow use of external MIDI controller
-   */
-  const handleMidi = () => {
-    navigator
-      ?.requestMIDIAccess({ sysex: true })
-      .then((midiAccess: any): void | PromiseLike<void> => {
-        type MIDIResponse = { data: [number, number, number?] };
-
-        midiAccess.inputs.forEach(
-          (input: any) =>
-            (input.onmidimessage = (event: MIDIResponse) => {
-              if (event.data.length === 3 && currentMode === midiMode)
-                allPads[64 - (event.data[1] - 35)].click();
-              else return;
-            })
-        );
-      }, null);
-  };
-
-  /**
    * @function createAudioContext create audio context / gain / convolver
    */
   const createAudioContext = async () => {
@@ -125,8 +104,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     reverb.buffer = await automatonAudioContext.decodeAudioData(impulseCopy);
     reverb.connect(gainNode);
     reverbNode = reverb;
-
-    handleMidi();
   };
 
   /**
@@ -281,13 +258,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     if (currentMode === classic) currentMode = random;
-    else if (currentMode === random) {
-      currentMode = midiMode;
-      document.body.classList.add(midiMode);
-    } else {
-      currentMode = classic;
-      document.body.classList.remove(midiMode);
-    }
+    else currentMode = classic;
 
     modeButton.innerHTML = `Mode: ${currentMode}`;
   });
