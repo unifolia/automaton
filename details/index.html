@@ -45,7 +45,7 @@
       </section>
       <section>
         <h2>Technical Details</h2>
-        <p>Version: 1.3.6</p>
+        <p>Version: 1.4.0</p>
         <p>
           This synthesizer's source code can be found here:
           <a
@@ -64,12 +64,12 @@
             href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API"
             >Web Audio API</a
           >
-          to generate notes in the browser. It uses the aptly named
+          to generate notes in the browser. It used the aptly named
           <a
             href="https://developer.mozilla.org/en-US/docs/Web/API/Web_MIDI_API"
             >Web MIDI API</a
           >
-          for receiving MIDI.
+          for receiving MIDI. MIDI is currently disabled.
         </p>
         <p>
           Because notes are generated in and via the browser, no audio files
@@ -81,51 +81,19 @@
         <h3>Frequency Calculations</h3>
         <p>
           Each of the grid's pads are given an ID from 1 to 64, respectively.
-          This is in ascending order, so bottom left is 1 and top right is 64.
+          This is in ascending order from the bottom left, so bottom left is 1
+          and top right is 64. You can think of each ID as being connected to
+          specific notes.
         </p>
         <p>
-          I'll use the first pad as an example. When that pad is pressed, its ID
-          of 1 is passed into a note calculator function. Some transposition is
-          needed so that the note is neither too low nor too high. The pad's ID
-          is changed to equal
-          <span>padId - row * 5 - 17</span>. The pad's <span>row</span> is
-          defined as <span>Math.floor((padId - 1) / rowLen) + 1</span>, with
-          <span>rowLen</span> being the square root of the grid size. In this
-          case, <span>row</span> = 1.
+          There are a few things going on to ensure that the IDs correspond to
+          notes that sound at least okay together. A purely chromatic grid would
+          sound terrible.
         </p>
         <p>
-          After this transposition, the first pad's ID is -19. So, why not just
-          subtract 20 from every ID if they're going to increase in sequential
-          order? This grid is not completely linear - like the grid of the
-          Ableton Push that it was inspired by - so duplicate notes have to be
-          taken into account. Each pad's final frequency is also defined by its
-          row, rather than just its initial ID.
-        </p>
-        <p>
-          The pad is close to its destination, but a couple of steps still have
-          to be taken. First, it must be ensured that the notes fit into some
-          sort of scale. A chromatic grid might sound fun, but it's largely
-          useless. Some safety nets are required. There are multiple ways of
-          interpreting it, but I chose the
-          <a href="https://en.wikipedia.org/wiki/Lydian_mode">Lydian mode</a> -
-          or the notes <span>1 2 3 ♯4 5 6 7</span>. Without getting too into the
-          weeds, that is accomplished by once again changing the pad's ID - this
-          time using
-          <span>padId = padId + Math.floor(padId / 7 + 2) * 5 + X</span>, with
-          <span>X</span> being some number between 0-5, depending on the initial
-          IDs fit into the Lydian scale (a fancy modulo operation is used to
-          ensure heptatonic compatibility). Don't forget your order of
-          operations!
-        </p>
-        <p>
-          Finally, that new ID (-26 in this case) is used to calculate the
-          frequency relative to (or, semitones from) A440. The math is
-          <span>frequency = +(440 * Math.pow(Math.pow(2, 1 / 12), padId))</span
-          >. This gives us a frequency of 97.9989 Hz for the first pad - or, the
-          note G2.
-          <a href="https://pages.mtu.edu/~suits/NoteFreqCalcs.html"
-            >Here are some notes from Michigan Technological University.</a
-          >
+          Finally the IDs are converted into actual frequencies. The math looks
+          something like this: frequency = +(440 * Math.pow(Math.pow(2, 1 / 12),
+          ID);
         </p>
         <h3>Generation Logging</h3>
         <p>
