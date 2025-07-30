@@ -25,6 +25,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   let timer: number;
   let generation: number = 0;
   let generationLog: Array<PadArray> = [];
+  let currentKey = 0;
+  let musicalMode = 0;
 
   // Play modes
   const classic = "Classic";
@@ -35,7 +37,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   let waveformTypes = ["sawtooth", "sine", "square", "triangle"];
   let impulseResponse = await fetch(
     `${
-      window.location.href.includes("file")
+      window.location.href.includes("localhost")
         ? "https://cors-anywhere.herokuapp.com/"
         : ""
     }https://jameslewis.io/assets/wav.wav`
@@ -69,11 +71,26 @@ document.addEventListener("DOMContentLoaded", async () => {
   };
 
   /**
+   * @function musicalProgressionController handles key changes and modal shifts
+   */
+  const musicalProgressionController = () => {
+    if (generation % 8 === 0 && generation > 0) {
+      const keyProgression = [0, 7, 2, 9, 4, 11, 6, 1];
+      currentKey =
+        keyProgression[Math.floor(generation / 8) % keyProgression.length];
+    }
+    if (generation % 4 === 0 && generation > 0) {
+      musicalMode = (musicalMode + 1) % 3;
+    }
+  };
+
+  /**
    * @function generationController compare current pattern to previous pattern, destroy all if plateaued
    */
   const generationController = () => {
     ++generation;
     generationLog.push(activePads);
+    musicalProgressionController();
 
     if (generationLog.length > 2) {
       generationLog.shift();
@@ -155,16 +172,14 @@ document.addEventListener("DOMContentLoaded", async () => {
    */
   allPads.forEach((pad, padId) => {
     const boxNum = gridSize - padId;
-    const [padNotes, keyChangeNotes] = calculateNotes(boxNum, gridSize);
     pad.id = `${boxNum}`;
 
     pad.addEventListener("click", () => {
-      const currentNotes =
-        Math.floor(generation / 4) % 2 === 0 ? padNotes : keyChangeNotes;
+      const [padNotes] = calculateNotes(boxNum, currentKey, musicalMode);
 
       if (automatonAudioContext === undefined) {
-        createAudioContext().then(() => padAction(pad, currentNotes));
-      } else padAction(pad, currentNotes);
+        createAudioContext().then(() => padAction(pad, padNotes));
+      } else padAction(pad, padNotes);
     });
   });
 
@@ -198,7 +213,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     _padId: number,
     isActive: boolean
   ) => {
-    if (Math.floor(Math.random() * 10) === 0) {
+    if (Math.floor(Math.random() * 6) === 0) {
       if (!activePads.includes(pad)) activePads.push(pad);
       if (!isActive) pad.classList.add("active");
       pad.click();

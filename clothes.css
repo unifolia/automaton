@@ -55,7 +55,7 @@ body.MIDI .resetButton {
   justify-content: center;
 
   height: 100%;
-  width: calc(35px * 8);
+  width: calc(60px * 6);
 }
 
 .grid.loading {
@@ -65,8 +65,8 @@ body.MIDI .resetButton {
 .pad {
   display: inline-block;
 
-  height: 35px;
-  width: 35px;
+  height: 60px;
+  width: 60px;
   box-sizing: border-box;
 
   cursor: pointer;
@@ -185,11 +185,11 @@ button::after {
 @media (min-width: 620px) {
   .grid {
     max-height: 580px;
-    width: calc(50px * 8);
+    width: calc(80px * 6);
   }
   .pad {
-    height: 50px;
-    width: 50px;
+    height: 80px;
+    width: 80px;
     border: 0.1px solid var(--white);
   }
 }

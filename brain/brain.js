@@ -1,1 +1,311 @@
-"use strict";(()=>{var T=(t,n)=>()=>(t&&(n=t(t=0)),n);var W=(t,n)=>()=>(n||t((n={exports:{}}).exports,n),n.exports);var E=(t,n,r)=>new Promise((l,f)=>{var h=a=>{try{i(r.next(a))}catch(v){f(v)}},c=a=>{try{i(r.throw(a))}catch(v){f(v)}},i=a=>a.done?l(a.value):Promise.resolve(a.value).then(h,c);i((r=r.apply(t,n)).next())});var X,R,U=T(()=>{"use strict";X=t=>{let n=new ArrayBuffer(t.byteLength);return new Uint8Array(n).set(new Uint8Array(t)),n},R=X});var Y,G,$=T(()=>{"use strict";Y=(t,n)=>{let r=Math.sqrt(n),l=440,f=Math.pow(2,1/12),h=Math.floor((t-1)/r)+1;t=t-h*5-17;let c=a=>a%7===0,i=Math.floor(t/7+2)*5;return c(t+7)?t=t+i:c(t+6)?t=t+i+1:c(t+5)||c(t+4)?t=t+i+2:c(t+3)?t=t+i+3:c(t+2)?t=t+i+4:c(t+1)&&(t=t+i+5),[+(l*Math.pow(f,t)).toFixed(4),+(l*Math.pow(f,t+3)).toFixed(4)]},G=Y});var Z,F,_=T(()=>{"use strict";Z=(t,n,r)=>{let l=Math.sqrt(t),f=r+l-1,h=r+l,c=r+l+1,i=r-1,a=r+1,v=r-l-1,w=r-l,M=r-l+1;return[f,h,c,i,a,v,w,M].map(u=>n.includes(u)).filter(u=>u!==!1)},F=Z});var p=W(A=>{U();$();_();document.addEventListener("DOMContentLoaded",()=>E(A,null,function*(){let t=[...document.querySelectorAll(".pad")],n=[],r=document.querySelector(".grid"),l=t.length,f=document.querySelector(".playButton"),h=document.querySelector(".resetButton"),c=document.querySelector(".modeButton"),i=document.querySelector(".aboutButton"),a=document.querySelector(".closeButton"),v=document.querySelector(".creditsButton"),w=3,M=2500,u=!1,S,q=0,g=[],C="Classic",N="Random",d=N,j=["sawtooth","sine","square","triangle"],z=yield(yield fetch(`${window.location.href.includes("file")?"https://cors-anywhere.herokuapp.com/":""}https://jameslewis.io/assets/wav.wav`)).arrayBuffer(),L,P,k=()=>{f.innerHTML=u?"Stop":"Play",r.className=u?"main grid playing":"main grid",c.className=u?"modeButton playing":"modeButton"},B=()=>{u=!1,clearInterval(S),k(),n.forEach(e=>e.classList.remove("active")),q=0,g=[],n=[]},V=()=>{if(++q,g.push(n),g.length>2){g.shift();let[e,o]=g.map(s=>s.map(y=>y.id).length>0?s.map(y=>y.id).reduce((y,b)=>y+b):"empty");e===o&&B()}},H=()=>E(A,null,function*(){L=new window.AudioContext;let e=L.createGain();e.gain.value=.05,e.connect(L.destination);let o=L.createConvolver(),s=R(z.slice(0));o.buffer=yield L.decodeAudioData(s),o.connect(e),P=o}),x=e=>E(A,null,function*(){let o=L.createOscillator();o.type=j[Math.floor(Math.random()*4)],o.frequency.setValueAtTime(e,L.currentTime),o.connect(P),o.start(),yield new Promise(m=>setTimeout(m,M)).then(()=>{o.stop(),o.disconnect()})}),D=(e,o)=>{u||(n.includes(e)?(n=n.filter(s=>s!==e),e.classList.remove("active")):(n.push(e),e.classList.add("active"),x(o))),u&&x(o)};t.forEach((e,o)=>{let s=l-o,[m,y]=G(s,l);e.id=`${s}`,e.addEventListener("click",()=>{let b=Math.floor(q/4)%2===0?m:y;L===void 0?H().then(()=>D(e,b)):D(e,b)})});let J=(e,o,s,m)=>{!s&&m===w||s&&(m===w||m===w-1)?(n.includes(e)||n.push(e),s||e.classList.add("active"),e.click()):(n=n.filter(y=>y!==e),s&&e.classList.remove("active"))},K=(e,o,s)=>{Math.floor(Math.random()*10)===0?(n.includes(e)||n.push(e),s||e.classList.add("active"),e.click()):(n=n.filter(m=>m!==e),s&&e.classList.remove("active"))},O=()=>{let e=n.map(o=>+o.id);t.forEach((o,s)=>{let m=o.classList.contains("active"),y=F(l,e,+o.id).length;d===C&&J(o,s,m,y),d===N&&K(o,s,m)}),V()},Q=()=>{u===!0?(O(),S=setInterval(()=>O(),M)):clearInterval(S)};f==null||f.addEventListener("click",()=>{u=!u,k(),Q()}),h==null||h.addEventListener("click",()=>{B()}),c==null||c.addEventListener("click",()=>{L===void 0&&H(),d===C?d=N:d=C,c.innerHTML=`Mode: ${d}`}),i==null||i.addEventListener("click",()=>{var e;(e=document.querySelector(".modal"))==null||e.classList.add("showModal")}),a==null||a.addEventListener("click",()=>{var e;(e=document.querySelector(".modal"))==null||e.classList.remove("showModal")}),v==null||v.addEventListener("click",()=>{let e=document.querySelector(".credits");e==null||e.classList.toggle("showCredits"),(e==null?void 0:e.classList.contains("showCredits"))===!0&&window.scrollTo(0,document.body.scrollHeight)})}))});p();})();
+"use strict";
+(() => {
+  var __getOwnPropNames = Object.getOwnPropertyNames;
+  var __esm = (fn, res) => function __init() {
+    return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+  };
+  var __commonJS = (cb, mod) => function __require() {
+    return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+  };
+  var __async = (__this, __arguments, generator) => {
+    return new Promise((resolve, reject) => {
+      var fulfilled = (value) => {
+        try {
+          step(generator.next(value));
+        } catch (e) {
+          reject(e);
+        }
+      };
+      var rejected = (value) => {
+        try {
+          step(generator.throw(value));
+        } catch (e) {
+          reject(e);
+        }
+      };
+      var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
+      step((generator = generator.apply(__this, __arguments)).next());
+    });
+  };
+
+  // brain/neurons/copyBuffer.ts
+  var copyBuffer, copyBuffer_default;
+  var init_copyBuffer = __esm({
+    "brain/neurons/copyBuffer.ts"() {
+      "use strict";
+      copyBuffer = (buffer) => {
+        let copy = new ArrayBuffer(buffer.byteLength);
+        new Uint8Array(copy).set(new Uint8Array(buffer));
+        return copy;
+      };
+      copyBuffer_default = copyBuffer;
+    }
+  });
+
+  // brain/neurons/noteCalculator.ts
+  var calculateNotes, noteCalculator_default;
+  var init_noteCalculator = __esm({
+    "brain/neurons/noteCalculator.ts"() {
+      "use strict";
+      calculateNotes = (padId, keyOffset = 0, modeIndex = 0) => {
+        const A440 = 440;
+        const semitone = Math.pow(2, 1 / 12);
+        const scales = {
+          major: [0, 2, 4, 5, 7, 9, 11],
+          minor: [0, 2, 3, 5, 7, 8, 10],
+          dorian: [0, 2, 3, 5, 7, 9, 10],
+          mixolydian: [0, 2, 4, 5, 7, 9, 10],
+          pentatonic: [0, 2, 4, 7, 9],
+          blues: [0, 3, 5, 6, 7, 10]
+        };
+        const scaleNames = Object.keys(scales);
+        const scaleKey = modeIndex < scaleNames.length ? scaleNames[modeIndex] : "major";
+        const currentScale = scales[scaleKey];
+        const scaleLength = currentScale.length;
+        const padIndex = padId - 1;
+        const scalePosition = padIndex % scaleLength;
+        const octaveOffset = Math.floor(padIndex / scaleLength);
+        const rootNote = 60 + keyOffset;
+        const scaleNote = rootNote + currentScale[scalePosition] + octaveOffset * 12;
+        const baseFreq = A440 * Math.pow(semitone, scaleNote - 90);
+        return [+baseFreq.toFixed(4)];
+      };
+      noteCalculator_default = calculateNotes;
+    }
+  });
+
+  // brain/neurons/returnSurroundingElements.ts
+  var returnSurroundingElements, returnSurroundingElements_default;
+  var init_returnSurroundingElements = __esm({
+    "brain/neurons/returnSurroundingElements.ts"() {
+      "use strict";
+      returnSurroundingElements = (gridSize, idArray, padId) => {
+        const rowLen = Math.sqrt(gridSize);
+        const al = padId + rowLen - 1;
+        const a = padId + rowLen;
+        const ar = padId + rowLen + 1;
+        const l = padId - 1;
+        const r = padId + 1;
+        const bl = padId - rowLen - 1;
+        const b = padId - rowLen;
+        const br = padId - rowLen + 1;
+        return [al, a, ar, l, r, bl, b, br].map((surrounding) => {
+          return idArray.includes(surrounding);
+        }).filter((isActive) => isActive !== false);
+      };
+      returnSurroundingElements_default = returnSurroundingElements;
+    }
+  });
+
+  // brain/brain.ts
+  var require_brain = __commonJS({
+    "brain/brain.ts"(exports) {
+      init_copyBuffer();
+      init_noteCalculator();
+      init_returnSurroundingElements();
+      document.addEventListener("DOMContentLoaded", () => __async(exports, null, function* () {
+        const allPads = [...document.querySelectorAll(".pad")];
+        let activePads = [];
+        const grid = document.querySelector(".grid");
+        const gridSize = allPads.length;
+        const playButton = document.querySelector(".playButton");
+        const resetButton = document.querySelector(".resetButton");
+        const modeButton = document.querySelector(".modeButton");
+        const aboutButton = document.querySelector(".aboutButton");
+        const closeButton = document.querySelector(".closeButton");
+        const creditsButton = document.querySelector(".creditsButton");
+        const mooreNum = 3;
+        const speed = 2500;
+        let isPlaying = false;
+        let timer;
+        let generation = 0;
+        let generationLog = [];
+        let currentKey = 0;
+        let musicalMode = 0;
+        const classic = "Classic";
+        const random = "Random";
+        let currentMode = random;
+        let waveformTypes = ["sawtooth", "sine", "square", "triangle"];
+        let impulseResponse = yield fetch(
+          `${window.location.href.includes("localhost") ? "https://cors-anywhere.herokuapp.com/" : ""}https://jameslewis.io/assets/wav.wav`
+        );
+        let arrayBuffer = yield impulseResponse.arrayBuffer();
+        let automatonAudioContext;
+        let reverbNode;
+        const updateState = () => {
+          playButton.innerHTML = isPlaying ? "Stop" : "Play";
+          grid.className = isPlaying ? "main grid playing" : "main grid";
+          modeButton.className = isPlaying ? "modeButton playing" : "modeButton";
+        };
+        const resetState = () => {
+          isPlaying = false;
+          clearInterval(timer);
+          updateState();
+          activePads.forEach((pad) => pad.classList.remove("active"));
+          generation = 0;
+          generationLog = [];
+          activePads = [];
+        };
+        const musicalProgressionController = () => {
+          if (generation % 8 === 0 && generation > 0) {
+            const keyProgression = [0, 7, 2, 9, 4, 11, 6, 1];
+            currentKey = keyProgression[Math.floor(generation / 8) % keyProgression.length];
+          }
+          if (generation % 4 === 0 && generation > 0) {
+            musicalMode = (musicalMode + 1) % 3;
+          }
+        };
+        const generationController = () => {
+          ++generation;
+          generationLog.push(activePads);
+          musicalProgressionController();
+          if (generationLog.length > 2) {
+            generationLog.shift();
+            const [lastGen, currentGen] = generationLog.map((array) => {
+              let ids = array.map((div) => div.id);
+              if (ids.length > 0)
+                return array.map((div) => div.id).reduce((a, b) => a + b);
+              return "empty";
+            });
+            if (lastGen === currentGen)
+              resetState();
+          }
+        };
+        const createAudioContext = () => __async(exports, null, function* () {
+          automatonAudioContext = new window.AudioContext();
+          const gainNode = automatonAudioContext.createGain();
+          gainNode.gain.value = 0.05;
+          gainNode.connect(automatonAudioContext.destination);
+          const reverb = automatonAudioContext.createConvolver();
+          const impulseCopy = copyBuffer_default(arrayBuffer.slice(0));
+          reverb.buffer = yield automatonAudioContext.decodeAudioData(impulseCopy);
+          reverb.connect(gainNode);
+          reverbNode = reverb;
+        });
+        const createOscillatorNode = (i) => __async(exports, null, function* () {
+          const oscillatorEngine = automatonAudioContext.createOscillator();
+          oscillatorEngine.type = waveformTypes[Math.floor(Math.random() * 4)];
+          oscillatorEngine.frequency.setValueAtTime(
+            i,
+            automatonAudioContext.currentTime
+          );
+          oscillatorEngine.connect(reverbNode);
+          oscillatorEngine.start();
+          const noteBuffer = new Promise((res) => setTimeout(res, speed));
+          yield noteBuffer.then(() => {
+            oscillatorEngine.stop();
+            oscillatorEngine.disconnect();
+          });
+        });
+        const padAction = (pad, currentNotes) => {
+          if (!isPlaying) {
+            if (!activePads.includes(pad)) {
+              activePads.push(pad);
+              pad.classList.add("active");
+              createOscillatorNode(currentNotes);
+            } else {
+              activePads = activePads.filter((item) => item !== pad);
+              pad.classList.remove("active");
+            }
+          }
+          if (isPlaying)
+            createOscillatorNode(currentNotes);
+        };
+        allPads.forEach((pad, padId) => {
+          const boxNum = gridSize - padId;
+          pad.id = `${boxNum}`;
+          pad.addEventListener("click", () => {
+            const [padNotes] = noteCalculator_default(boxNum, currentKey, musicalMode);
+            if (automatonAudioContext === void 0) {
+              createAudioContext().then(() => padAction(pad, padNotes));
+            } else
+              padAction(pad, padNotes);
+          });
+        });
+        const playClassicMode = (pad, _padId, isActive, moores) => {
+          if (!isActive && moores === mooreNum || isActive && (moores === mooreNum || moores === mooreNum - 1)) {
+            if (!activePads.includes(pad))
+              activePads.push(pad);
+            if (!isActive)
+              pad.classList.add("active");
+            pad.click();
+          } else {
+            activePads = activePads.filter((item) => item !== pad);
+            if (isActive)
+              pad.classList.remove("active");
+          }
+        };
+        const playRandomMode = (pad, _padId, isActive) => {
+          if (Math.floor(Math.random() * 6) === 0) {
+            if (!activePads.includes(pad))
+              activePads.push(pad);
+            if (!isActive)
+              pad.classList.add("active");
+            pad.click();
+          } else {
+            activePads = activePads.filter((item) => item !== pad);
+            if (isActive)
+              pad.classList.remove("active");
+          }
+        };
+        const autoPlay = () => {
+          const activePadIds = activePads.map((activePad) => +activePad.id);
+          allPads.forEach((pad, padId) => {
+            const isActive = pad.classList.contains("active");
+            const surroundingNum = returnSurroundingElements_default(
+              gridSize,
+              activePadIds,
+              +pad.id
+            ).length;
+            if (currentMode === classic)
+              playClassicMode(pad, padId, isActive, surroundingNum);
+            if (currentMode === random)
+              playRandomMode(pad, padId, isActive);
+          });
+          generationController();
+        };
+        const setUpAutoPlay = () => {
+          if (isPlaying === true) {
+            autoPlay();
+            timer = setInterval(() => autoPlay(), speed);
+          } else
+            clearInterval(timer);
+        };
+        playButton == null ? void 0 : playButton.addEventListener("click", () => {
+          isPlaying = !isPlaying;
+          updateState();
+          setUpAutoPlay();
+        });
+        resetButton == null ? void 0 : resetButton.addEventListener("click", () => {
+          resetState();
+        });
+        modeButton == null ? void 0 : modeButton.addEventListener("click", () => {
+          if (automatonAudioContext === void 0) {
+            createAudioContext();
+          }
+          if (currentMode === classic)
+            currentMode = random;
+          else
+            currentMode = classic;
+          modeButton.innerHTML = `Mode: ${currentMode}`;
+        });
+        aboutButton == null ? void 0 : aboutButton.addEventListener("click", () => {
+          var _a;
+          (_a = document.querySelector(".modal")) == null ? void 0 : _a.classList.add("showModal");
+        });
+        closeButton == null ? void 0 : closeButton.addEventListener("click", () => {
+          var _a;
+          (_a = document.querySelector(".modal")) == null ? void 0 : _a.classList.remove("showModal");
+        });
+        creditsButton == null ? void 0 : creditsButton.addEventListener("click", () => {
+          const credits = document.querySelector(".credits");
+          credits == null ? void 0 : credits.classList.toggle("showCredits");
+          if ((credits == null ? void 0 : credits.classList.contains("showCredits")) === true) {
+            window.scrollTo(0, document.body.scrollHeight);
+          }
+        });
+      }));
+    }
+  });
+  require_brain();
+})();

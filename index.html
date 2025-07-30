@@ -48,34 +48,6 @@
       <div class="pad"></div>
       <div class="pad"></div>
       <div class="pad"></div>
-      <div class="pad"></div>
-      <div class="pad"></div>
-      <div class="pad"></div>
-      <div class="pad"></div>
-      <div class="pad"></div>
-      <div class="pad"></div>
-      <div class="pad"></div>
-      <div class="pad"></div>
-      <div class="pad"></div>
-      <div class="pad"></div>
-      <div class="pad"></div>
-      <div class="pad"></div>
-      <div class="pad"></div>
-      <div class="pad"></div>
-      <div class="pad"></div>
-      <div class="pad"></div>
-      <div class="pad"></div>
-      <div class="pad"></div>
-      <div class="pad"></div>
-      <div class="pad"></div>
-      <div class="pad"></div>
-      <div class="pad"></div>
-      <div class="pad"></div>
-      <div class="pad"></div>
-      <div class="pad"></div>
-      <div class="pad"></div>
-      <div class="pad"></div>
-      <div class="pad"></div>
       <div class="controls">
         <button class="playButton">Play</button>
         <button class="resetButton">Reset</button>
@@ -99,14 +71,27 @@
         <section class="modalDetails">
           <p>
             This is a generative synthesizer. New notes will be generated every
-            2.5&nbspseconds Every&nbspcluster of newly generated notes is a
-            "generation." The&nbspkey will change +/- 3&nbspsemitones every 4
+            2.5&nbsp;seconds Every&nbsp;cluster of newly generated notes is a
+            "generation." The&nbsp;key will change +/- 3&nbsp;semitones every 4
             generations, alternating.
             <a href="./details/index.html">Learn More</a>
           </p>
           <hr />
           <div>
+            <h2 class="mode">Random</h2>
+            <p>
+              Each new generation will be unaffected by the previous generation.
+              Instead, each individual pad will have a 12.5% chance of coming to
+              life during the new generation's nascency.
+            </p>
+            <hr />
+          </div>
+          <div>
             <h2 class="mode">Classic</h2>
+            <p>
+              While this is, to me, the draw of this synth, it is admittedly
+              less straightforward than Random mode.
+            </p>
             <p>
               The rules of Conway's Game of Life will be used to produce the
               next generation:
@@ -125,17 +110,8 @@
             </ul>
             <p>
               Note that each pad's "neighbour" is defined by its numeric value.
-              For example, pads 8 and 9 are neighbours, despite being on
+              For example, pads 6 and 7 are neighbours, despite being on
               opposite sides of the grid.
-            </p>
-            <hr />
-          </div>
-          <div>
-            <h2 class="mode">Random</h2>
-            <p>
-              Each new generation will be unaffected by the previous generation.
-              Instead, each individual pad will have a 10% chance of coming to
-              life during the new generation's nascency.
             </p>
             <hr />
           </div>

@@ -45,7 +45,7 @@
       </section>
       <section>
         <h2>Technical Details</h2>
-        <p>Version: 1.4.0</p>
+        <p>Version: 2.0.0</p>
         <p>
           This synthesizer's source code can be found here:
           <a
@@ -69,7 +69,7 @@
             href="https://developer.mozilla.org/en-US/docs/Web/API/Web_MIDI_API"
             >Web MIDI API</a
           >
-          for receiving MIDI. MIDI is currently disabled.
+          for receiving MIDI. MIDI is currently disabled (only temporarily)
         </p>
         <p>
           Because notes are generated in and via the browser, no audio files
@@ -80,15 +80,18 @@
         </p>
         <h3>Frequency Calculations</h3>
         <p>
-          Each of the grid's pads are given an ID from 1 to 64, respectively.
+          Each of the grid's pads are given an ID from 1 to 36, respectively.
           This is in ascending order from the bottom left, so bottom left is 1
-          and top right is 64. You can think of each ID as being connected to
+          and top right is 36. You can think of each ID as being connected to
           specific notes.
         </p>
         <p>
           There are a few things going on to ensure that the IDs correspond to
-          notes that sound at least okay together. A purely chromatic grid would
-          sound terrible.
+          notes that sound at least somewhat okay (debatable) together. A purely
+          chromatic grid would almost always sound terrible. But not
+          <a href="https://en.wikipedia.org/wiki/Infinite_monkey_theorem"
+            >ALWAYS always</a
+          >.
         </p>
         <p>
           Finally the IDs are converted into actual frequencies. The math looks
@@ -114,9 +117,6 @@
           in the background. With every generation comes a list of every active
           pad. If the current list is identical to the previous list (i.e. still
           life is happening), the game will reset itself.
-          <span>Technically</span> this could happen in Random Mode as well. If
-          it does happen, you will have witnessed the greatest statistical
-          improbability of all time.
         </p>
         <h3>Reverb</h3>
         <p>

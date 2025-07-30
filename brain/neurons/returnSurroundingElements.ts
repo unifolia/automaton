@@ -1,7 +1,9 @@
 /**
  * @function returnSurroundingElements return pads surrounding another pad
+ * Now supports 6×6 grid (36 pads total)
  */
 const returnSurroundingElements = (gridSize: number, idArray: number[], padId: number) => {
+    // For 36 pads: 6 rows × 6 columns (perfect square)
     const rowLen = Math.sqrt(gridSize);
     const al = padId + rowLen - 1;
     const a = padId + rowLen;
