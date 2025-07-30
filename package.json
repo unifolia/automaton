@@ -1,12 +1,18 @@
 {
   "devDependencies": {
-    "typescript": "^4.9.4"
+    "@vitejs/plugin-legacy": "^7.1.0",
+    "typescript": "^4.9.4",
+    "vite": "^7.0.6"
   },
   "dependencies": {
     "@types/webmidi": "^2.0.6",
     "esbuild": "0.16.5"
   },
   "scripts": {
-    "build": "esbuild brain/brain.ts --bundle --minify --outfile=brain/brain.js"
+    "build": "esbuild brain/brain.ts --bundle --minify --outfile=brain/brain.js",
+    "dev": "vite",
+    "build-vite": "vite build",
+    "preview": "vite preview",
+    "watch": "esbuild brain/brain.ts --bundle --outfile=brain/brain.js --watch"
   }
 }
