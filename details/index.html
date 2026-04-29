@@ -132,7 +132,8 @@
           As Classic Mode is based on the rules of
           <a href="https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life"
             >Conway's Game of Life</a
-          >, it's possible to run into
+          >, the grid uses toroidal wrapping: moving patterns that leave one
+          edge continue from the opposite edge. It's still possible to run into
           <a
             href="https://en.wikipedia.org/wiki/Still_life_(cellular_automaton)"
             >still lifes</a
@@ -152,23 +153,17 @@
         </p>
         <h3>Reverb</h3>
         <p>
-          When the app loads, the impulse response's .wav file is retrieved and
-          turned into an array buffer. At the same time, an empty, generic
-          convolver node is created globally. Once the synthesizer starts
-          playing, every created note has its own reverb convolver created using
-          a copy of the impulse response's decoded array buffer. The note's own
-          convolver connects to its gain node, and the convolver/gain signal
-          path gets plugged into the global convolver.
+          When the synthesizer starts, the impulse response's .wav file is
+          retrieved and turned into an array buffer. If that file is available,
+          notes are routed through a convolver node before reaching the main
+          gain. If it is not available, the synthesizer falls back to a dry
+          signal so the instrument can still play.
         </p>
 
         <p>
-          You can think of the reverb/gain nodes as guitar pedals, and the
-          global convolver node as an amp with multiple inputs. In this
-          scenario, a copy of the reverb has to be "installed" onto the pedal.
-          As this pedal doesn't understand .wav files, an array buffer is used
-          instead (which is effectively that .wav file as 1s and 0s). Once
-          complete, the pedals get plugged into the amp. This process happens
-          for every single note!
+          You can think of the reverb/gain nodes as guitar pedals. The reverb
+          can be patched in when the impulse response loads, but the signal path
+          still works without it.
         </p>
       </section>
       <hr />

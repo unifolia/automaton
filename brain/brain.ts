@@ -24,7 +24,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     let isPlaying: boolean = false;
     let timer: number;
     let generation: number = 0;
-    let generationLog: Array<PadArray> = [];
+    let generationLog: string[] = [];
 
     // Play modes
     const classic = "Classic";
@@ -34,14 +34,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Audio components
     let waveformTypes = ["sawtooth", "sine", "square", "triangle"];
-    let impulseResponse = await fetch(
-        `${
-            window.location.href.includes("file") ? "https://cors-anywhere.herokuapp.com/" : ""
-        }https://jameslewis.io/assets/wav.wav`
-    );
-    let arrayBuffer: ArrayBuffer = await impulseResponse.arrayBuffer();
+    const impulseResponseUrl = "https://jameslewis.io/assets/wav.wav";
+    let arrayBuffer: ArrayBuffer | undefined;
     let automatonAudioContext: AudioContext;
-    let reverbNode: ConvolverNode;
+    let audioContextPromise: Promise<void> | undefined;
+    let synthOutputNode: AudioNode | undefined;
 
     /**
      * @function updateState update elements when isPlaying changes
@@ -67,21 +64,25 @@ document.addEventListener("DOMContentLoaded", async () => {
         activePads = [];
     };
 
+    const snapshotActivePads = () => {
+        if (activePads.length === 0) return "empty";
+
+        return activePads
+            .map((pad) => +pad.id)
+            .sort((a, b) => a - b)
+            .join(",");
+    };
+
     /**
      * @function generationController compare current pattern to previous pattern, destroy all if plateaued
      */
     const generationController = () => {
         ++generation;
-        generationLog.push(activePads);
+        generationLog.push(snapshotActivePads());
 
         if (generationLog.length > 2) {
             generationLog.shift();
-
-            const [lastGen, currentGen] = generationLog.map((array) => {
-                let ids = array.map((div) => div.id);
-                if (ids.length > 0) return array.map((div) => div.id).reduce((a, b) => a + b);
-                return "empty";
-            });
+            const [lastGen, currentGen] = generationLog;
 
             if (lastGen === currentGen) resetState();
         }
@@ -91,22 +92,34 @@ document.addEventListener("DOMContentLoaded", async () => {
      * @function handleMIDI allow use of external MIDI controller
      */
     const handleMidi = () => {
-        navigator?.requestMIDIAccess().then((midiAccess: any): void | PromiseLike<void> => {
+        if (navigator.requestMIDIAccess === undefined) return;
+
+        navigator.requestMIDIAccess().then((midiAccess: any): void | PromiseLike<void> => {
             type MIDIResponse = { data: [number, number, number?] };
 
             midiAccess.inputs.forEach(
                 (input: any) =>
                     (input.onmidimessage = (event: MIDIResponse) => {
-                        if (event.data.length === 3 && currentMode === midiMode)
-                            allPads[64 - (event.data[1] - 35)].click();
-                        else return;
+                        if (event.data.length !== 3 || currentMode !== midiMode) return;
+
+                        const pad = allPads[gridSize - (event.data[1] - 35)];
+                        pad?.click();
                     })
             );
         }, null);
     };
 
+    const loadImpulseResponse = async () => {
+        if (arrayBuffer === undefined) {
+            const impulseResponse = await fetch(impulseResponseUrl);
+            arrayBuffer = await impulseResponse.arrayBuffer();
+        }
+
+        return copyBuffer(arrayBuffer.slice(0));
+    };
+
     /**
-     * @function createAudioContext create audio context / gain / convolver
+     * @function createAudioContext create audio context / gain / optional convolver
      */
     const createAudioContext = async () => {
         automatonAudioContext = new window.AudioContext();
@@ -115,25 +128,42 @@ document.addEventListener("DOMContentLoaded", async () => {
         gainNode.gain.value = 0.05; // 😈
         gainNode.connect(automatonAudioContext.destination);
 
-        const reverb = automatonAudioContext.createConvolver();
-        const impulseCopy = copyBuffer(arrayBuffer.slice(0));
-        reverb.buffer = await automatonAudioContext.decodeAudioData(impulseCopy);
-        reverb.connect(gainNode);
-        reverbNode = reverb;
+        try {
+            const reverb = automatonAudioContext.createConvolver();
+            reverb.buffer = await automatonAudioContext.decodeAudioData(
+                await loadImpulseResponse()
+            );
+            reverb.connect(gainNode);
+            synthOutputNode = reverb;
+        } catch {
+            synthOutputNode = gainNode;
+        }
 
         handleMidi();
     };
 
+    const ensureAudioContext = async () => {
+        if (synthOutputNode !== undefined) return;
+
+        if (audioContextPromise === undefined) {
+            audioContextPromise = createAudioContext();
+        }
+
+        await audioContextPromise;
+    };
+
     /**
-     * @function createOscillator create individual oscillatoir
+     * @function createOscillator create individual oscillator
      */
     const createOscillatorNode = async (i: number) => {
+        if (synthOutputNode === undefined) return;
+
         const oscillatorEngine = automatonAudioContext.createOscillator();
 
         oscillatorEngine.type = waveformTypes[Math.floor(Math.random() * 4)] as OscillatorType;
         oscillatorEngine.frequency.setValueAtTime(i, automatonAudioContext.currentTime);
 
-        oscillatorEngine.connect(reverbNode);
+        oscillatorEngine.connect(synthOutputNode);
         oscillatorEngine.start();
 
         const noteBuffer = new Promise((res) => setTimeout(res, speed));
@@ -174,14 +204,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         pad.addEventListener("click", () => {
             const currentNotes = Math.floor(generation / 4) % 2 === 0 ? padNotes : keyChangeNotes;
 
-            if (automatonAudioContext === undefined) {
-                createAudioContext().then(() => padAction(pad, currentNotes));
-            } else padAction(pad, currentNotes);
+            ensureAudioContext().then(() => padAction(pad, currentNotes));
         });
     });
 
     /**
-     * @function playClassicMode play notes according to Conyway's Game of Life
+     * @function playClassicMode play notes according to Conway's Game of Life
      */
     const playClassicMode = (
         pad: HTMLDivElement,
@@ -260,9 +288,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     modeButton?.addEventListener("click", () => {
-        if (automatonAudioContext === undefined) {
-            createAudioContext();
-        }
+        ensureAudioContext();
 
         if (currentMode === classic) currentMode = random;
         else if (currentMode === random) {

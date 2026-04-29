@@ -1,22 +1,41 @@
 /**
  * @function returnSurroundingElements return pads surrounding another pad
+ * Uses toroidal wrapping so patterns leaving one edge re-enter on the opposite edge.
  */
-const returnSurroundingElements = (gridSize: number, idArray: number[], padId: number) => {
+const returnSurroundingElements = (
+    gridSize: number,
+    idArray: number[],
+    padId: number
+) => {
     const rowLen = Math.sqrt(gridSize);
-    const al = padId + rowLen - 1;
-    const a = padId + rowLen;
-    const ar = padId + rowLen + 1;
-    const l = padId - 1;
-    const r = padId + 1;
-    const bl = padId - rowLen - 1;
-    const b = padId - rowLen;
-    const br = padId - rowLen + 1;
 
-    return [al, a, ar, l, r, bl, b, br]
-        .map((surrounding) => {
-            return idArray.includes(surrounding);
+    if (!Number.isInteger(rowLen)) {
+        throw new Error("Grid size must be a perfect square.");
+    }
+
+    const activeIds = new Set(idArray);
+    const padIndex = padId - 1;
+    const row = Math.floor(padIndex / rowLen);
+    const column = padIndex % rowLen;
+    const offsets = [
+        [-1, -1],
+        [-1, 0],
+        [-1, 1],
+        [0, -1],
+        [0, 1],
+        [1, -1],
+        [1, 0],
+        [1, 1],
+    ];
+
+    return offsets
+        .map(([rowOffset, columnOffset]) => {
+            const wrappedRow = (row + rowOffset + rowLen) % rowLen;
+            const wrappedColumn = (column + columnOffset + rowLen) % rowLen;
+
+            return wrappedRow * rowLen + wrappedColumn + 1;
         })
-        .filter((isActive) => isActive !== false);
+        .filter((surrounding) => activeIds.has(surrounding));
 };
 
 export default returnSurroundingElements;
