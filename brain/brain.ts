@@ -201,8 +201,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         const [padNotes, keyChangeNotes] = calculateNotes(boxNum, gridSize);
         pad.id = `${boxNum}`;
 
-        pad.addEventListener("click", () => {
-            const currentNotes = Math.floor(generation / 4) % 2 === 0 ? padNotes : keyChangeNotes;
+    oscillatorEngine.connect(reverbNode);
+    oscillatorEngine.start();
 
             ensureAudioContext().then(() => padAction(pad, currentNotes));
         });
@@ -282,6 +282,53 @@ document.addEventListener("DOMContentLoaded", async () => {
         updateState();
         setUpAutoPlay();
     });
+  });
+
+  /**
+   * @function playClassicMode play notes according to Conyway's Game of Life
+   */
+  const playClassicMode = (
+    pad: HTMLDivElement,
+    _padId: number,
+    isActive: boolean,
+    moores: number
+  ) => {
+    if (
+      (!isActive && moores === mooreNum) ||
+      (isActive && (moores === mooreNum || moores === mooreNum - 1))
+    ) {
+      if (!activePads.includes(pad)) activePads.push(pad);
+      if (!isActive) pad.classList.add("active");
+      pad.click();
+    } else {
+      activePads = activePads.filter((item) => item !== pad);
+      if (isActive) pad.classList.remove("active");
+    }
+  };
+
+  /**
+   * @function playRandomMode every note has 1/10 change in playing
+   */
+  const playRandomMode = (
+    pad: HTMLDivElement,
+    _padId: number,
+    isActive: boolean
+  ) => {
+    if (Math.floor(Math.random() * 6) === 0) {
+      if (!activePads.includes(pad)) activePads.push(pad);
+      if (!isActive) pad.classList.add("active");
+      pad.click();
+    } else {
+      activePads = activePads.filter((item) => item !== pad);
+      if (isActive) pad.classList.remove("active");
+    }
+  };
+
+  /**
+   * @function autoPlay start cellular automaton transformations
+   */
+  const autoPlay = () => {
+    const activePadIds = activePads.map((activePad) => +activePad.id);
 
     resetButton?.addEventListener("click", () => {
         resetState();
@@ -301,21 +348,57 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         modeButton.innerHTML = `Mode: ${currentMode}`;
     });
+    generationController();
+  };
 
-    aboutButton?.addEventListener("click", () => {
-        document.querySelector('.modal')?.classList.add("showModal");
-    })
+  /**
+   * @function setUpAutoPlay setInterval to repeat autoPlay
+   */
+  const setUpAutoPlay = () => {
+    if (isPlaying === true) {
+      autoPlay();
+      timer = setInterval(() => autoPlay(), speed);
+    } else clearInterval(timer);
+  };
 
-    closeButton?.addEventListener("click", () => {
-        document.querySelector('.modal')?.classList.remove("showModal");
-    })
+  /**
+   * @functions button click events
+   */
+  playButton?.addEventListener("click", () => {
+    isPlaying = !isPlaying;
+    updateState();
+    setUpAutoPlay();
+  });
 
-    creditsButton?.addEventListener("click", () => {
-        const credits = document.querySelector('.credits');
-        credits?.classList.toggle("showCredits");
+  resetButton?.addEventListener("click", () => {
+    resetState();
+  });
 
-        if (credits?.classList.contains('showCredits') === true) {
-            window.scrollTo(0, document.body.scrollHeight);
-        }
-    })
+  modeButton?.addEventListener("click", () => {
+    if (automatonAudioContext === undefined) {
+      createAudioContext();
+    }
+
+    if (currentMode === classic) currentMode = random;
+    else currentMode = classic;
+
+    modeButton.innerHTML = `Mode: ${currentMode}`;
+  });
+
+  aboutButton?.addEventListener("click", () => {
+    document.querySelector(".modal")?.classList.add("showModal");
+  });
+
+  closeButton?.addEventListener("click", () => {
+    document.querySelector(".modal")?.classList.remove("showModal");
+  });
+
+  creditsButton?.addEventListener("click", () => {
+    const credits = document.querySelector(".credits");
+    credits?.classList.toggle("showCredits");
+
+    if (credits?.classList.contains("showCredits") === true) {
+      window.scrollTo(0, document.body.scrollHeight);
+    }
+  });
 });
