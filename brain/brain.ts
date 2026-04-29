@@ -2,24 +2,30 @@ import copyBuffer from "./neurons/copyBuffer";
 import calculateNotes from "./neurons/noteCalculator";
 import returnSurroundingElements from "./neurons/returnSurroundingElements";
 
+const requireEl = <T extends Element>(selector: string): T => {
+  const el = document.querySelector<T>(selector);
+  if (!el) throw new Error(`Required element not found: ${selector}`);
+  return el;
+};
+
 document.addEventListener("DOMContentLoaded", async () => {
   // Grid/pad info
   type PadArray = HTMLDivElement[];
   const allPads = [...document.querySelectorAll(".pad")] as PadArray;
   let activePads: PadArray = [];
-  const grid: HTMLElement = document.querySelector(".grid")!;
+  const grid = requireEl<HTMLElement>(".grid");
   const gridSize = allPads.length;
 
   // Buttons
-  const playButton = document.querySelector(".playButton");
-  const resetButton = document.querySelector(".resetButton");
-  const modeButton = document.querySelector(".modeButton");
-  const aboutButton = document.querySelector(".aboutButton");
-  const closeButton = document.querySelector(".closeButton");
-  const creditsButton = document.querySelector(".creditsButton");
+  const playButton = requireEl<HTMLButtonElement>(".playButton");
+  const resetButton = requireEl<HTMLButtonElement>(".resetButton");
+  const modeButton = requireEl<HTMLButtonElement>(".modeButton");
+  const aboutButton = requireEl<HTMLButtonElement>(".aboutButton");
+  const closeButton = requireEl<HTMLButtonElement>(".closeButton");
+  const creditsButton = requireEl<HTMLButtonElement>(".creditsButton");
 
   // Statistics / settings
-  const mooreNum = 3;
+  const birthCount = 3;
   const speed = 2500;
   let isPlaying: boolean = false;
   let timer: number;
@@ -30,10 +36,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   const classic = "Classic";
   const random = "Random";
   const midiMode = "MIDI";
+  const midiAvailable = navigator.requestMIDIAccess !== undefined;
   let currentMode = classic;
 
   // Audio components
-  let waveformTypes = ["sawtooth", "sine", "square", "triangle"];
+  const waveformTypes = ["sawtooth", "sine", "square", "triangle"];
   const impulseResponseUrl = "https://jameslewis.io/assets/wav.wav";
   let arrayBuffer: ArrayBuffer | undefined;
   let automatonAudioContext: AudioContext;
@@ -44,9 +51,9 @@ document.addEventListener("DOMContentLoaded", async () => {
    * @function updateState update elements when isPlaying changes
    */
   const updateState = () => {
-    playButton!.innerHTML = isPlaying ? "Stop" : "Play";
-    grid!.className = isPlaying ? "main grid playing" : "main grid";
-    modeButton!.className = isPlaying ? "modeButton playing" : "modeButton";
+    playButton.innerHTML = isPlaying ? "Stop" : "Play";
+    grid.className = isPlaying ? "grid playing" : "grid";
+    modeButton.className = isPlaying ? "modeButton playing" : "modeButton";
   };
 
   /**
@@ -226,8 +233,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     moores: number,
   ) => {
     if (
-      (!isActive && moores === mooreNum) ||
-      (isActive && (moores === mooreNum || moores === mooreNum - 1))
+      (!isActive && moores === birthCount) ||
+      (isActive && (moores === birthCount || moores === birthCount - 1))
     ) {
       if (!activePads.includes(pad)) activePads.push(pad);
       if (!isActive) pad.classList.add("active");
@@ -290,21 +297,23 @@ document.addEventListener("DOMContentLoaded", async () => {
   /**
    * @functions button click events
    */
-  playButton?.addEventListener("click", () => {
+  playButton.addEventListener("click", async () => {
+    await ensureAudioContext();
     isPlaying = !isPlaying;
     updateState();
     setUpAutoPlay();
   });
 
-  resetButton?.addEventListener("click", () => {
+  resetButton.addEventListener("click", () => {
     resetState();
   });
 
-  modeButton?.addEventListener("click", () => {
+  modeButton.addEventListener("click", () => {
     ensureAudioContext();
 
-    if (currentMode === classic) currentMode = random;
-    else if (currentMode === random) {
+    if (currentMode === classic) {
+      currentMode = random;
+    } else if (currentMode === random && midiAvailable) {
       currentMode = midiMode;
       document.body.classList.add(midiMode);
     } else {
@@ -315,15 +324,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     modeButton.innerHTML = `Mode: ${currentMode}`;
   });
 
-  aboutButton?.addEventListener("click", () => {
+  aboutButton.addEventListener("click", () => {
     document.querySelector(".modal")?.classList.add("showModal");
   });
 
-  closeButton?.addEventListener("click", () => {
+  closeButton.addEventListener("click", () => {
     document.querySelector(".modal")?.classList.remove("showModal");
   });
 
-  creditsButton?.addEventListener("click", () => {
+  creditsButton.addEventListener("click", () => {
     const credits = document.querySelector(".credits");
     credits?.classList.toggle("showCredits");
 
