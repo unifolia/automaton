@@ -3,319 +3,332 @@ import calculateNotes from "./neurons/noteCalculator";
 import returnSurroundingElements from "./neurons/returnSurroundingElements";
 
 document.addEventListener("DOMContentLoaded", async () => {
-    // Grid/pad info
-    type PadArray = HTMLDivElement[];
-    const allPads = [...document.querySelectorAll(".pad")] as PadArray;
-    let activePads: PadArray = [];
-    const grid: HTMLElement = document.querySelector(".grid")!;
-    const gridSize = allPads.length;
+  // Grid/pad info
+  type PadArray = HTMLDivElement[];
+  const allPads = [...document.querySelectorAll(".pad")] as PadArray;
+  let activePads: PadArray = [];
+  const grid: HTMLElement = document.querySelector(".grid")!;
+  const gridSize = allPads.length;
 
-    // Buttons
-    const playButton = document.querySelector(".playButton");
-    const resetButton = document.querySelector(".resetButton");
-    const modeButton = document.querySelector(".modeButton");
-    const aboutButton = document.querySelector(".aboutButton");
-    const closeButton = document.querySelector(".closeButton");
-    const creditsButton = document.querySelector(".creditsButton");
+  // Buttons
+  const playButton = document.querySelector(".playButton");
+  const resetButton = document.querySelector(".resetButton");
+  const modeButton = document.querySelector(".modeButton");
+  const aboutButton = document.querySelector(".aboutButton");
+  const closeButton = document.querySelector(".closeButton");
+  const creditsButton = document.querySelector(".creditsButton");
 
-    // Statistics / settings
-    const mooreNum = 3;
-    const speed = 2500;
-    let isPlaying: boolean = false;
-    let timer: number;
-    let generation: number = 0;
-    let generationLog: string[] = [];
+  // Statistics / settings
+  const mooreNum = 3;
+  const speed = 2500;
+  let isPlaying: boolean = false;
+  let timer: number;
+  let generation: number = 0;
+  let generationLog: string[] = [];
 
-    // Play modes
-    const classic = "Classic";
-    const random = "Random";
-    const midiMode = "MIDI";
-    let currentMode = classic;
+  // Play modes
+  const classic = "Classic";
+  const random = "Random";
+  const midiMode = "MIDI";
+  let currentMode = classic;
 
-    // Audio components
-    let waveformTypes = ["sawtooth", "sine", "square", "triangle"];
-    const impulseResponseUrl = "https://jameslewis.io/assets/wav.wav";
-    let arrayBuffer: ArrayBuffer | undefined;
-    let automatonAudioContext: AudioContext;
-    let audioContextPromise: Promise<void> | undefined;
-    let synthOutputNode: AudioNode | undefined;
+  // Audio components
+  let waveformTypes = ["sawtooth", "sine", "square", "triangle"];
+  const impulseResponseUrl = "https://jameslewis.io/assets/wav.wav";
+  let arrayBuffer: ArrayBuffer | undefined;
+  let automatonAudioContext: AudioContext;
+  let audioContextPromise: Promise<void> | undefined;
+  let synthOutputNode: AudioNode | undefined;
 
-    /**
-     * @function updateState update elements when isPlaying changes
-     */
-    const updateState = () => {
-        playButton!.innerHTML = isPlaying ? "Stop" : "Play";
-        grid!.className = isPlaying ? "main grid playing" : "main grid";
-        modeButton!.className = isPlaying ? "modeButton playing" : "modeButton";
-    };
+  /**
+   * @function updateState update elements when isPlaying changes
+   */
+  const updateState = () => {
+    playButton!.innerHTML = isPlaying ? "Stop" : "Play";
+    grid!.className = isPlaying ? "main grid playing" : "main grid";
+    modeButton!.className = isPlaying ? "modeButton playing" : "modeButton";
+  };
 
-    /**
-     * @function resetState reset grid
-     */
-    const resetState = () => {
-        isPlaying = false;
-        clearInterval(timer);
-        updateState();
+  /**
+   * @function resetState reset grid
+   */
+  const resetState = () => {
+    isPlaying = false;
+    clearInterval(timer);
+    updateState();
 
-        activePads.forEach((pad) => pad.classList.remove("active"));
+    activePads.forEach((pad) => pad.classList.remove("active"));
 
-        generation = 0;
-        generationLog = [];
-        activePads = [];
-    };
+    generation = 0;
+    generationLog = [];
+    activePads = [];
+  };
 
-    const snapshotActivePads = () => {
-        if (activePads.length === 0) return "empty";
+  const snapshotActivePads = () => {
+    if (activePads.length === 0) return "empty";
 
-        return activePads
-            .map((pad) => +pad.id)
-            .sort((a, b) => a - b)
-            .join(",");
-    };
+    return activePads
+      .map((pad) => +pad.id)
+      .sort((a, b) => a - b)
+      .join(",");
+  };
 
-    /**
-     * @function generationController compare current pattern to previous pattern, destroy all if plateaued
-     */
-    const generationController = () => {
-        ++generation;
-        generationLog.push(snapshotActivePads());
+  /**
+   * @function generationController compare current pattern to previous pattern, destroy all if plateaued
+   */
+  const generationController = () => {
+    ++generation;
+    generationLog.push(snapshotActivePads());
 
-        if (generationLog.length > 2) {
-            generationLog.shift();
-            const [lastGen, currentGen] = generationLog;
+    if (generationLog.length > 2) {
+      generationLog.shift();
+      const [lastGen, currentGen] = generationLog;
 
-            if (lastGen === currentGen) resetState();
-        }
-    };
+      if (lastGen === currentGen) resetState();
+    }
+  };
 
-    /**
-     * @function handleMIDI allow use of external MIDI controller
-     */
-    const handleMidi = () => {
-        if (navigator.requestMIDIAccess === undefined) return;
+  /**
+   * @function handleMIDI allow use of external MIDI controller
+   */
+  const handleMidi = () => {
+    if (navigator.requestMIDIAccess === undefined) return;
 
-        navigator.requestMIDIAccess().then((midiAccess: any): void | PromiseLike<void> => {
-            type MIDIResponse = { data: [number, number, number?] };
+    navigator
+      .requestMIDIAccess()
+      .then((midiAccess: any): void | PromiseLike<void> => {
+        type MIDIResponse = { data: [number, number, number?] };
 
-            midiAccess.inputs.forEach(
-                (input: any) =>
-                    (input.onmidimessage = (event: MIDIResponse) => {
-                        if (event.data.length !== 3 || currentMode !== midiMode) return;
+        midiAccess.inputs.forEach(
+          (input: any) =>
+            (input.onmidimessage = (event: MIDIResponse) => {
+              if (event.data.length !== 3 || currentMode !== midiMode) return;
 
-                        const pad = allPads[gridSize - (event.data[1] - 35)];
-                        pad?.click();
-                    })
-            );
-        }, null);
-    };
+              const pad = allPads[gridSize - (event.data[1] - 35)];
+              pad?.click();
+            }),
+        );
+      }, null);
+  };
 
-    const loadImpulseResponse = async () => {
-        if (arrayBuffer === undefined) {
-            const impulseResponse = await fetch(impulseResponseUrl);
-            arrayBuffer = await impulseResponse.arrayBuffer();
-        }
+  const loadImpulseResponse = async () => {
+    if (arrayBuffer === undefined) {
+      const impulseResponse = await fetch(impulseResponseUrl);
+      arrayBuffer = await impulseResponse.arrayBuffer();
+    }
 
-        return copyBuffer(arrayBuffer.slice(0));
-    };
+    return copyBuffer(arrayBuffer.slice(0));
+  };
 
-    /**
-     * @function createAudioContext create audio context / gain / optional convolver
-     */
-    const createAudioContext = async () => {
-        automatonAudioContext = new window.AudioContext();
+  /**
+   * @function createAudioContext create audio context / gain / optional convolver
+   */
+  const createAudioContext = async () => {
+    automatonAudioContext = new window.AudioContext();
 
-        const gainNode = automatonAudioContext.createGain();
-        gainNode.gain.value = 0.05; // 😈
-        gainNode.connect(automatonAudioContext.destination);
+    const gainNode = automatonAudioContext.createGain();
+    gainNode.gain.value = 0.05; // 😈
+    gainNode.connect(automatonAudioContext.destination);
 
-        try {
-            const reverb = automatonAudioContext.createConvolver();
-            reverb.buffer = await automatonAudioContext.decodeAudioData(
-                await loadImpulseResponse()
-            );
-            reverb.connect(gainNode);
-            synthOutputNode = reverb;
-        } catch {
-            synthOutputNode = gainNode;
-        }
+    try {
+      const reverb = automatonAudioContext.createConvolver();
+      reverb.buffer = await automatonAudioContext.decodeAudioData(
+        await loadImpulseResponse(),
+      );
+      reverb.connect(gainNode);
+      synthOutputNode = reverb;
+    } catch {
+      synthOutputNode = gainNode;
+    }
 
-        handleMidi();
-    };
+    handleMidi();
+  };
 
-    const ensureAudioContext = async () => {
-        if (synthOutputNode !== undefined) return;
+  const ensureAudioContext = async () => {
+    if (synthOutputNode !== undefined) return;
 
-        if (audioContextPromise === undefined) {
-            audioContextPromise = createAudioContext();
-        }
+    if (audioContextPromise === undefined) {
+      audioContextPromise = createAudioContext();
+    }
 
-        await audioContextPromise;
-    };
+    await audioContextPromise;
+  };
 
-    /**
-     * @function createOscillator create individual oscillator
-     */
-    const createOscillatorNode = async (i: number) => {
-        if (synthOutputNode === undefined) return;
+  /**
+   * @function createOscillator create individual oscillator
+   */
+  const createOscillatorNode = async (i: number) => {
+    if (synthOutputNode === undefined) return;
 
-        const oscillatorEngine = automatonAudioContext.createOscillator();
+    const oscillatorEngine = automatonAudioContext.createOscillator();
 
-        oscillatorEngine.type = waveformTypes[Math.floor(Math.random() * 4)] as OscillatorType;
-        oscillatorEngine.frequency.setValueAtTime(i, automatonAudioContext.currentTime);
+    oscillatorEngine.type = waveformTypes[
+      Math.floor(Math.random() * 4)
+    ] as OscillatorType;
+    oscillatorEngine.frequency.setValueAtTime(
+      i,
+      automatonAudioContext.currentTime,
+    );
 
-        oscillatorEngine.connect(synthOutputNode);
-        oscillatorEngine.start();
+    oscillatorEngine.connect(synthOutputNode);
+    oscillatorEngine.start();
 
-        const noteBuffer = new Promise((res) => setTimeout(res, speed));
-        await noteBuffer.then(() => {
-            oscillatorEngine.stop();
-            oscillatorEngine.disconnect();
-        });
-    };
+    const noteBuffer = new Promise((res) => setTimeout(res, speed));
+    await noteBuffer.then(() => {
+      oscillatorEngine.stop();
+      oscillatorEngine.disconnect();
+    });
+  };
 
-    /**
-     * @function padAction
-     */
-    const padAction = (pad: HTMLDivElement, currentNotes: number) => {
-        if (!isPlaying) {
-            if (!activePads.includes(pad)) {
-                activePads.push(pad);
-                pad.classList.add("active");
+  /**
+   * @function padAction
+   */
+  const padAction = (pad: HTMLDivElement, currentNotes: number) => {
+    if (!isPlaying) {
+      if (!activePads.includes(pad)) {
+        activePads.push(pad);
+        pad.classList.add("active");
 
-                createOscillatorNode(currentNotes);
-            } else {
-                activePads = activePads.filter((item) => item !== pad);
-                pad.classList.remove("active");
-            }
-        }
+        createOscillatorNode(currentNotes);
+      } else {
+        activePads = activePads.filter((item) => item !== pad);
+        pad.classList.remove("active");
+      }
+    }
 
-        if (isPlaying) createOscillatorNode(currentNotes);
-    };
+    if (isPlaying) createOscillatorNode(currentNotes);
+  };
 
-    /**
-     * @function allPads.forEach grid setup / calculate frequencies associated with each pad
-     * @function clickEvent select/de-select pads individually
-     */
+  /**
+   * @function allPads.forEach grid setup / calculate frequencies associated with each pad
+   * @function clickEvent select/de-select pads individually
+   */
+  allPads.forEach((pad, padId) => {
+    const boxNum = gridSize - padId;
+    const [padNotes, keyChangeNotes] = calculateNotes(boxNum, gridSize);
+    pad.id = `${boxNum}`;
+
+    pad.addEventListener("click", () => {
+      const currentNotes =
+        Math.floor(generation / 4) % 2 === 0 ? padNotes : keyChangeNotes;
+
+      ensureAudioContext().then(() => padAction(pad, currentNotes));
+    });
+  });
+
+  /**
+   * @function playClassicMode play notes according to Conway's Game of Life
+   */
+  const playClassicMode = (
+    pad: HTMLDivElement,
+    _padId: number,
+    isActive: boolean,
+    moores: number,
+  ) => {
+    if (
+      (!isActive && moores === mooreNum) ||
+      (isActive && (moores === mooreNum || moores === mooreNum - 1))
+    ) {
+      if (!activePads.includes(pad)) activePads.push(pad);
+      if (!isActive) pad.classList.add("active");
+      pad.click();
+    } else {
+      activePads = activePads.filter((item) => item !== pad);
+      if (isActive) pad.classList.remove("active");
+    }
+  };
+
+  /**
+   * @function playRandomMode every note has 1/10 change in playing
+   */
+  const playRandomMode = (
+    pad: HTMLDivElement,
+    _padId: number,
+    isActive: boolean,
+  ) => {
+    if (Math.floor(Math.random() * 10) === 0) {
+      if (!activePads.includes(pad)) activePads.push(pad);
+      if (!isActive) pad.classList.add("active");
+      pad.click();
+    } else {
+      activePads = activePads.filter((item) => item !== pad);
+      if (isActive) pad.classList.remove("active");
+    }
+  };
+
+  /**
+   * @function autoPlay start cellular automaton transformations
+   */
+  const autoPlay = () => {
+    const activePadIds = activePads.map((activePad) => +activePad.id);
+
     allPads.forEach((pad, padId) => {
-        const boxNum = gridSize - padId;
-        const [padNotes, keyChangeNotes] = calculateNotes(boxNum, gridSize);
-        pad.id = `${boxNum}`;
+      const isActive = pad.classList.contains("active");
+      const surroundingNum = returnSurroundingElements(
+        gridSize,
+        activePadIds,
+        +pad.id,
+      ).length;
 
-        pad.addEventListener("click", () => {
-            const currentNotes = Math.floor(generation / 4) % 2 === 0 ? padNotes : keyChangeNotes;
-
-            ensureAudioContext().then(() => padAction(pad, currentNotes));
-        });
+      if (currentMode === classic)
+        playClassicMode(pad, padId, isActive, surroundingNum);
+      if (currentMode === random) playRandomMode(pad, padId, isActive);
     });
+    generationController();
+  };
 
-    /**
-     * @function playClassicMode play notes according to Conway's Game of Life
-     */
-    const playClassicMode = (
-        pad: HTMLDivElement,
-        _padId: number,
-        isActive: boolean,
-        moores: number
-    ) => {
-        if (
-            (!isActive && moores === mooreNum) ||
-            (isActive && (moores === mooreNum || moores === mooreNum - 1))
-        ) {
-            if (!activePads.includes(pad)) activePads.push(pad);
-            if (!isActive) pad.classList.add("active");
-            pad.click();
-        } else {
-            activePads = activePads.filter((item) => item !== pad);
-            if (isActive) pad.classList.remove("active");
-        }
-    };
+  /**
+   * @function setUpAutoPlay setInterval to repeat autoPlay
+   */
+  const setUpAutoPlay = () => {
+    if (isPlaying === true) {
+      autoPlay();
+      timer = setInterval(() => autoPlay(), speed);
+    } else clearInterval(timer);
+  };
 
-    /**
-     * @function playRandomMode every note has 1/10 change in playing
-     */
-    const playRandomMode = (pad: HTMLDivElement, _padId: number, isActive: boolean) => {
-        if (Math.floor(Math.random() * 10) === 0) {
-            if (!activePads.includes(pad)) activePads.push(pad);
-            if (!isActive) pad.classList.add("active");
-            pad.click();
-        } else {
-            activePads = activePads.filter((item) => item !== pad);
-            if (isActive) pad.classList.remove("active");
-        }
-    };
+  /**
+   * @functions button click events
+   */
+  playButton?.addEventListener("click", () => {
+    isPlaying = !isPlaying;
+    updateState();
+    setUpAutoPlay();
+  });
 
-    /**
-     * @function autoPlay start cellular automaton transformations
-     */
-    const autoPlay = () => {
-        const activePadIds = activePads.map((activePad) => +activePad.id);
+  resetButton?.addEventListener("click", () => {
+    resetState();
+  });
 
-        allPads.forEach((pad, padId) => {
-            const isActive = pad.classList.contains("active");
-            const surroundingNum = returnSurroundingElements(
-                gridSize,
-                activePadIds,
-                +pad.id
-            ).length;
+  modeButton?.addEventListener("click", () => {
+    ensureAudioContext();
 
-            if (currentMode === classic) playClassicMode(pad, padId, isActive, surroundingNum);
-            if (currentMode === random) playRandomMode(pad, padId, isActive);
-        });
-        generationController();
-    };
+    if (currentMode === classic) currentMode = random;
+    else if (currentMode === random) {
+      currentMode = midiMode;
+      document.body.classList.add(midiMode);
+    } else {
+      currentMode = classic;
+      document.body.classList.remove(midiMode);
+    }
 
-    /**
-     * @function setUpAutoPlay setInterval to repeat autoPlay
-     */
-    const setUpAutoPlay = () => {
-        if (isPlaying === true) {
-            autoPlay();
-            timer = setInterval(() => autoPlay(), speed);
-        } else clearInterval(timer);
-    };
+    modeButton.innerHTML = `Mode: ${currentMode}`;
+  });
 
-    /**
-     * @functions button click events
-     */
-    playButton?.addEventListener("click", () => {
-        isPlaying = !isPlaying;
-        updateState();
-        setUpAutoPlay();
-    });
+  aboutButton?.addEventListener("click", () => {
+    document.querySelector(".modal")?.classList.add("showModal");
+  });
 
-    resetButton?.addEventListener("click", () => {
-        resetState();
-    });
+  closeButton?.addEventListener("click", () => {
+    document.querySelector(".modal")?.classList.remove("showModal");
+  });
 
-    modeButton?.addEventListener("click", () => {
-        ensureAudioContext();
+  creditsButton?.addEventListener("click", () => {
+    const credits = document.querySelector(".credits");
+    credits?.classList.toggle("showCredits");
 
-        if (currentMode === classic) currentMode = random;
-        else if (currentMode === random) {
-            currentMode = midiMode;
-            document.body.classList.add(midiMode);
-        } else {
-            currentMode = classic;
-            document.body.classList.remove(midiMode);
-        }
-
-        modeButton.innerHTML = `Mode: ${currentMode}`;
-    });
-
-    aboutButton?.addEventListener("click", () => {
-        document.querySelector('.modal')?.classList.add("showModal");
-    })
-
-    closeButton?.addEventListener("click", () => {
-        document.querySelector('.modal')?.classList.remove("showModal");
-    })
-
-    creditsButton?.addEventListener("click", () => {
-        const credits = document.querySelector('.credits');
-        credits?.classList.toggle("showCredits");
-
-        if (credits?.classList.contains('showCredits') === true) {
-            window.scrollTo(0, document.body.scrollHeight);
-        }
-    })
+    if (credits?.classList.contains("showCredits") === true) {
+      window.scrollTo(0, document.body.scrollHeight);
+    }
+  });
 });
