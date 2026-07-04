@@ -8,13 +8,47 @@ const requireEl = <T extends Element>(selector: string): T => {
   return el;
 };
 
+const clamp = (value: number, min: number, max: number) =>
+  Math.min(max, Math.max(min, value));
+
 document.addEventListener("DOMContentLoaded", async () => {
+  console.log(
+    "%c📻",
+    [
+      "background: #c1f3cd",
+      "font-size: 90px",
+      "border: 4px double #ffd166",
+      "padding: 50px",
+      "transform: scale(11)",
+    ].join(";"),
+  );
+
+  console.log(
+    "We know now that in the early years of the 20th century, this world was being watched closely by intelligences greater than man's and yet as mortal as his own. We know now that as human beings busied themselves about their various concerns, they were scrutinized and studied, perhaps almost as narrowly as a man with a microscope might scrutinize the transient creatures that swarm and multiply in a drop of water. With infinite complacence, people went to and fro over the earth about their little affairs, serene in the assurance of their dominion over this small spinning fragment of solar driftwood which by chance or design man has inherited out of the dark mystery of Time and Space. Yet across an immense ethereal gulf, minds that are to our minds as ours are to the beasts in the jungle, intellects vast, cool and unsympathetic, regarded this earth with envious eyes and slowly and surely drew their plans against us.",
+  );
+
   // Grid/pad info
   type PadArray = HTMLDivElement[];
   const allPads = [...document.querySelectorAll(".pad")] as PadArray;
   let activePads: PadArray = [];
   const grid = requireEl<HTMLElement>(".grid");
   const gridSize = allPads.length;
+  const gridSideLength = Math.sqrt(gridSize);
+  const gridColumnCount = Number.isInteger(gridSideLength)
+    ? gridSideLength
+    : gridSize;
+
+  const panForPad = (padId: number) => {
+    const visualColumn = gridColumnCount - 1 - (padId % gridColumnCount);
+
+    return clamp(
+      (visualColumn / Math.max(1, gridColumnCount - 1)) * 1.6 -
+        0.8 +
+        (Math.random() - 0.5) * 0.18,
+      -0.92,
+      0.92,
+    );
+  };
 
   // Buttons
   const playButton = requireEl<HTMLButtonElement>(".playButton");
@@ -37,11 +71,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   const random = "Random";
   const midiMode = "MIDI";
   const midiAvailable = navigator.requestMIDIAccess !== undefined;
-  let currentMode = classic;
+  let currentMode = random;
 
   // Audio components
   const waveformTypes = ["sawtooth", "sine", "square", "triangle"];
-  const impulseResponseUrl = "https://jameslewis.io/assets/wav.wav";
+  const impulseResponseUrl = "./resonator.wav";
   let arrayBuffer: ArrayBuffer | undefined;
   let automatonAudioContext: AudioContext;
   let audioContextPromise: Promise<void> | undefined;
@@ -131,7 +165,19 @@ document.addEventListener("DOMContentLoaded", async () => {
    * @function createAudioContext create audio context / gain / optional convolver
    */
   const createAudioContext = async () => {
-    automatonAudioContext = new window.AudioContext();
+    const AudioCtor =
+      window.AudioContext ||
+      (
+        window as typeof window & {
+          webkitAudioContext?: typeof AudioContext;
+        }
+      ).webkitAudioContext;
+
+    if (AudioCtor === undefined) {
+      throw new Error("Web Audio is not available in this browser.");
+    }
+
+    automatonAudioContext = new AudioCtor();
 
     const gainNode = automatonAudioContext.createGain();
     gainNode.gain.value = 0.05; // 😈
@@ -164,10 +210,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   /**
    * @function createOscillator create individual oscillator
    */
-  const createOscillatorNode = async (i: number) => {
+  const createOscillatorNode = async (i: number, pan: number) => {
     if (synthOutputNode === undefined) return;
 
     const oscillatorEngine = automatonAudioContext.createOscillator();
+    const panner =
+      typeof automatonAudioContext.createStereoPanner === "function"
+        ? automatonAudioContext.createStereoPanner()
+        : undefined;
 
     oscillatorEngine.type = waveformTypes[
       Math.floor(Math.random() * 4)
@@ -177,33 +227,45 @@ document.addEventListener("DOMContentLoaded", async () => {
       automatonAudioContext.currentTime,
     );
 
-    oscillatorEngine.connect(synthOutputNode);
+    if (panner !== undefined) {
+      panner.pan.setValueAtTime(pan, automatonAudioContext.currentTime);
+      oscillatorEngine.connect(panner);
+      panner.connect(synthOutputNode);
+    } else {
+      oscillatorEngine.connect(synthOutputNode);
+    }
+
     oscillatorEngine.start();
 
     const noteBuffer = new Promise((res) => setTimeout(res, speed));
     await noteBuffer.then(() => {
       oscillatorEngine.stop();
       oscillatorEngine.disconnect();
+      panner?.disconnect();
     });
   };
 
   /**
    * @function padAction
    */
-  const padAction = (pad: HTMLDivElement, currentNotes: number) => {
+  const padAction = (
+    pad: HTMLDivElement,
+    currentNotes: number,
+    pan: number,
+  ) => {
     if (!isPlaying) {
       if (!activePads.includes(pad)) {
         activePads.push(pad);
         pad.classList.add("active");
 
-        createOscillatorNode(currentNotes);
+        createOscillatorNode(currentNotes, pan);
       } else {
         activePads = activePads.filter((item) => item !== pad);
         pad.classList.remove("active");
       }
     }
 
-    if (isPlaying) createOscillatorNode(currentNotes);
+    if (isPlaying) createOscillatorNode(currentNotes, pan);
   };
 
   /**
@@ -219,7 +281,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       const currentNotes =
         Math.floor(generation / 4) % 2 === 0 ? padNotes : keyChangeNotes;
 
-      ensureAudioContext().then(() => padAction(pad, currentNotes));
+      ensureAudioContext().then(() =>
+        padAction(pad, currentNotes, panForPad(padId)),
+      );
     });
   });
 
