@@ -1,0 +1,12 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "automaton",
+  "compatibility_date": "2026-11-04",
+  "routes": [
+    { "pattern": "bellcast.engineering/automaton", "zone_name": "bellcast.engineering" },
+    { "pattern": "bellcast.engineering/automaton/*", "zone_name": "bellcast.engineering" }
+  ],
+  "assets": {
+    "directory": "./dist-cloudflare"
+  }
+}
