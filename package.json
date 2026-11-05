@@ -5,6 +5,7 @@
     "typescript": "^4.9.4"
   },
   "scripts": {
-    "build": "esbuild brain/brain.ts --bundle --minify --outfile=brain/brain.js"
+    "build": "esbuild brain/brain.ts --bundle --minify --outfile=brain/brain.js",
+    "build:cloudflare": "npm run build && node scripts/build-cloudflare.mjs"
   }
 }

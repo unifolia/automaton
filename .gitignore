@@ -3,7 +3,9 @@ node_modules/
 
 # Build outputs
 dist/
+dist-cloudflare/
 build/
+.wrangler/
 *.tsbuildinfo
 
 # Logs
